@@ -10,5 +10,6 @@ django-filter==0.7
 djangorestframework==2.3.13
 kombu==3.0.14
 pytz==2014.2
+sphinx_rtd_theme==0.1.6
 Sphinx==1.2.2
 wsgiref==0.1.2

@@ -19,3 +19,7 @@ The features are minimal, but here's what this will do, someday:
 * Integration with Github (and Github Enterprise) and possibly other code
   hosting places like Bitbucket
 * Really simple local installation
+
+### Links
+
+* Docs - http://hamster.readthedocs.org
