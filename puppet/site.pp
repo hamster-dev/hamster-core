@@ -1,3 +1,4 @@
+include apt
 include sudo
 include ntp
 include packages::debian

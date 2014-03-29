@@ -1,5 +1,5 @@
 class ntp {
-    package { 'ntp': ensure => latest }
+    package { 'ntp': ensure => latest, require => Class[apt] }
 
     file { 'ntp-conf':
         path    => '/etc/ntp.conf',

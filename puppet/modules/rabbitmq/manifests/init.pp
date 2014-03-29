@@ -1,5 +1,5 @@
 class rabbitmq {
-    package { 'rabbitmq-server': ensure => latest }
+    package { 'rabbitmq-server': ensure => latest, require => Class[apt] }
 
     service { 'rabbitmq-server':
         ensure    => true,

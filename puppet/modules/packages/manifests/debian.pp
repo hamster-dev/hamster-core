@@ -1,11 +1,14 @@
 class packages::debian {
-    package { 'rsync':       ensure => latest }
-    package { 'lsof':        ensure => latest }
-    package { 'dstat':       ensure => latest }
-    package { 'wget':        ensure => latest }
-    package { 'traceroute':  ensure => latest }
-    package { 'bash':        ensure => latest }
-    package { 'ethtool':     ensure => latest }
-    package { 'vim':         ensure => latest }
-    package { 'vim-tiny':    ensure => absent }
+    package { 'rsync':             ensure => latest, require => Class[apt] }
+    package { 'lsof':              ensure => latest, require => Class[apt] }
+    package { 'dstat':             ensure => latest, require => Class[apt] }
+    package { 'wget':              ensure => latest, require => Class[apt] }
+    package { 'traceroute':        ensure => latest, require => Class[apt] }
+    package { 'bash':              ensure => latest, require => Class[apt] }
+    package { 'ethtool':           ensure => latest, require => Class[apt] }
+    package { 'vim':               ensure => latest, require => Class[apt] }
+    package { 'git':               ensure => latest, require => Class[apt] }
+    package { 'python-virtualenv': ensure => latest, require => Class[apt] }
+    package { 'virtualenvwrapper': ensure => latest, require => Class[apt] }
+    package { 'vim-tiny':          ensure => absent }
 }

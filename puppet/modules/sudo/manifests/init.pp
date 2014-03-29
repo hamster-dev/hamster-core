@@ -1,5 +1,5 @@
 class sudo {
-    package { 'sudo': ensure => latest }
+    package { 'sudo': ensure => latest, require => Class[apt] }
 
     file { 'sudoers':
         path    => '/etc/sudoers',
