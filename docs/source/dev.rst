@@ -25,11 +25,15 @@ Assuming that went well, you can now login to the VM::
 
    $ vagrant ssh
 
-... and start up the site::
+Initial setup of the virtualenv and site::
 
    $ mkvirtualenv hamster
    $ cd /vagrant
-   $ pip install -r hamster/requirements.pip
+   $ pip install -Ur hamster/requirements.pip
+   $ python manage.py syncdb --migrate
+
+... and start up the site::
+
    $ python manage.py runserver 0.0.0.0:8000
 
 You should see it running at http://localhost:9000
