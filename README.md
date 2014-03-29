@@ -1,6 +1,8 @@
 Hamster Continous Integration
 =============================
 
+[![Build Status](https://api.travis-ci.org/hamster-dev/hamster-core.svg)](https://api.travis-ci.org/hamster-dev/hamster-core.svg) [![Coverage Status](https://coveralls.io/repos/hamster-dev/hamster-core/badge.png?branch=master)](https://coveralls.io/r/hamster-dev/hamster-core?branch=master)
+
 Jenkins needs to go, and Travis CI is great for public projects, but sucks at
 internal CI for commercial stuff, so we figured the world could use another
 CI project.
