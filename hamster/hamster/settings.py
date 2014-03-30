@@ -39,6 +39,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'south',
     'jobs',
+    'builds',
 )
 
 MIDDLEWARE_CLASSES = (

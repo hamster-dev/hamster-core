@@ -9,6 +9,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box_url = "https://dl.dropboxusercontent.com/u/197673519/debian-7.2.0.box"
 
   config.vm.network :forwarded_port, guest: 8000, host: 9000    # api
+  config.vm.network :forwarded_port, guest: 5555, host: 5555    # celery status interface
   config.vm.network :forwarded_port, guest: 55672, host: 55672  # rabbitmq admin interfrace
 
   # Create a private network, which allows host-only access to the machine

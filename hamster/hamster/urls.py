@@ -4,10 +4,12 @@ from django.contrib import admin
 admin.autodiscover()
 
 from rest_framework import routers
-from jobs import views
+from jobs.views import JobViewSet
+from builds.views import BuildViewSet
 
 router = routers.DefaultRouter()
-router.register(r'jobs', views.JobViewSet)
+router.register(r'jobs', JobViewSet)
+router.register(r'builds', BuildViewSet)
 
 
 urlpatterns = patterns('',

@@ -1,8 +1,9 @@
 from django.db import models
 
 class Job(models.Model):
-    job_name = models.CharField(max_length=80)
+    name = models.CharField(max_length=80)
     disabled = models.BooleanField(default=False)
+    project_url = models.URLField(blank=True)
 
     def __unicode__(self):
-        return self.job_name
+        return self.name
