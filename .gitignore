@@ -1,0 +1,16 @@
+osxenv
+*.pyc
+# a file I am using to push private env vars
+/*.env
+.Python
+*.egg-info
+*.sqlite3
+.ropeproject
+.idea
+hamster/static
+.cache
+.tox
+
+# files that should never enter source control
+github.key
+github.pub

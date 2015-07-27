@@ -1,0 +1,16 @@
+coverage
+coveralls
+flake8>=2.1.0
+
+pytest
+pytest-django
+pytest-cov
+pytest-mock
+pytest-xprocess
+
+django-extensions
+# removed until i can make it work reliably
+#vcrpy
+
+ipdb
+mock

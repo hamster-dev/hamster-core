@@ -1,0 +1,46 @@
+db:
+  image: "postgres:latest"
+  expose:
+    - 5432
+# The web and app servers both share the same codebase;
+# when app.sh is run for the app container, it generates the static
+# files that are used by web container.  #TODO fix this, maybe?
+redis:
+  image: "redis:latest"
+  expose:
+    - 6379
+app:
+  build: .
+  command: ./app.sh
+  environment:
+    - HAMSTER_DEBUG=1
+    - HAMSTER_DEVELOP=1
+    - HAMSTER_GITHUB_API_TOKEN
+    - HAMSTER_GITHUB_HOST
+    - DJANGO_SETTINGS_MODULE=hamster.settings
+    - NO_PROXY
+    - no_proxy
+  volumes:
+    - .:/hamster
+  ports:
+    - "9000:8000"
+  links:
+    - db
+    - redis
+worker:
+  build: .
+  command: ./worker.sh
+  #user: hamster
+  environment:
+    - HAMSTER_DEBUG=1
+    - HAMSTER_DEVELOP=1
+    - HAMSTER_GITHUB_API_TOKEN
+    - HAMSTER_GITHUB_HOST
+    - DJANGO_SETTINGS_MODULE=hamster.settings
+    - NO_PROXY
+    - no_proxy
+  volumes:
+    - .:/hamster
+  links:
+    - db
+    - redis

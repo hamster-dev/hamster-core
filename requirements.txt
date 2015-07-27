@@ -1,0 +1,13 @@
+Django==1.8.2
+github3.py==1.0.0a1
+djangorestframework
+jsonfield
+jinja2
+celery==3.1.18 # 3.1.18 is first version to support django 1.8
+redis
+jsonpickle
+jenkinsapi
+cached_property
+celery-pipeline==0.7.2
+pip
+tox
