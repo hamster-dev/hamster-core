@@ -1,159 +1,142 @@
 # Hamster CI
 ![Hamster](http://i5.glitter-graphics.org/pub/1933/1933385pgqm471nc2.jpg)
 
-A system for building stuff.  
+A distributed python3 system that reacts to github events, allowing a user to specify actions 
+to be taken when these events occur.  Actions are executed on remote workers, using the 
+`celery` library.
 
-Built atop `pipeline`.
+Hamster knows how to 
+  - run shell commands
+  - interact with github
+  - execute developer-defined, runtime-configured python functions 
+
+Actions are configured by the user in the UI and are saved into a database,
+which is read by the appserver when a triggering event occurs, and then scheduled
+to be executed on a worker.
+
+Actions, while technically distributed across nodes, are (currently) executed
+serially in a pipeline, using the `celery-pipeline` library.
 
 
+# Technical overview
 
-# Pipeline
-`pipeline` is a django app to facilitate the execution of user-defined 
-actions initialized by some event, and conditionally executed based on some 
-predicate, .  IOW, the 'if this, then that' model.
+    Event --> EventHandler --> Actions
 
-Requires python3.4
+Input entering the system is deserialized to one or more `Event`s.
+Events expose the deserialized input data as properties, which 
+are carried forward through the rest of the system.
 
-## The Idea
-Some event enters the system, and pipeline inspects it.  If it's a known event
-type, the data provided by the event is serialized into a "source".
-User-defined configuration db is then searched for a configuration that matches
-the source instance; if a configuration is found, the user-defined actions
-stored in that configuration are handed off to an executor which initializes 
-and sends them to the celery scheduler to be executed by a worker.  Each
-defined action supports success and failure handlers, which are also
-executed by the celery scheduler based on the truthiness of the action's
-return value.
+When an event occurs, the system is searched for matching `Event Handlers`,
+which are created and stored by the end-user.  Event handlers store the
+Actions which are to be performed, and these actions can access the data
+stored in the Event (using jinja templates) in order to modify their behavior.
 
-The actions as a group are (currently) executed synchronously, in-order,
- using the ``celery.chain`` construct.
-Each action is provided with the return value of the action preceeding it.
+# Example
 
-Sources can provide an on-disk representation, and pipeline supports
-acquiring the source and storing it in a temporary workspace directory.
-The workspace abstraction supports the execution of shell commands within
-the context of that directory and a given system environment and user account.
-If an action representing a shell command is executed, a workspace will
-automatically be created and the source's files will be acquired and
-stored in the workspace in order to support the shell command.
+Here is a docs-friendly example of a simple event handler:
 
-## Implementation
-The event handling system is currently implemented using a Django view.
+    name: Pull Request Linter
+    events: pull_request.opened, pull_request.reopened
+    criteria: source.repository is Hello-World
+    actions:
+      - shell_command
+        name: 'linter'
+        args:
+          - 'pip install pylint && pylint ./'
+      - pull_request_comment
+        args:
+          - 'hey @{{ source.user }} pylint returned {{ linter.output }}'
+          
+The above event handler would fire for the 'Hello-World' repo, when a pull
+request is opened or reopened, and would run pylint on the checked out repo 
+(more on this later), emitting a comment to the originating pull request with 
+the output of the pylint command.
 
-The only currently supported event hook method is 'push'. Possible future
-event hooks are 'poll' and 'schedule'.  
+Note that not only is the event data available to the action (source.user), the 
+result of previously-executed actions is available (linter.output).  This 
+allows us to build powerful pipelines that can automate our github workflows.
+          
+## Checked-out repo
+Defined source classes (like `PullRequest`) provide instructions to the system
+for obtaining their on-disk representations. The system provides a Workspace, 
+located on the disk on the worker, that an action can use; when used, it will 
+obtain the source locally.  For a PullRequest, this means cloning the
+repository and checking out the pull request branch.  Shell commands executed
+in the workspace will be run inside the cloned repository directory.
+The workspaces are temporary, and are deleted when the action is completed.
 
-### Design considerations
-In order to implement a system with user defined inputs and outputs,
-some measure of decoupling is required.  In a classical application, you 
-might find liberal usage of interfaces to define how components are
-allowed to interact with each other. Instead, pipeline (ab)uses duck 
-typing; if an output component expects to operate on a PullRequest source object,
-it should just assume that the source provided to it implements the same 
-interface as that object (i.e. has a source_branch, an ssh_url etc.).
 
-Additionally, pipeline makes use of the registry pattern for almost everything,
-so that components don't have to know how to acquire each other (which
-will almost certainly lead to cyclical import errors).  Each supported
-component will define a 'friendly name' that other components can use to 
-reference it.
+# Using Hamster
+Hamster is packaged with all the code necessary for deployment inside Docker
+containers.  
+The application architecture includes:
 
-## Currently supported inputs and outputs
-Currently "pull request open" github webhook is the only implemented event 
-type.  It is (de)serialized to a ``pipeline.modules.github.PullRequest``.
+  - celery worker/s
+  - gunicorn app workers
+  - nginx for static files and for proxying to gunicorn
+  - redis as the broker (TODO: rabbitmq)
+  - postgresql database
 
-Supported actions are:
+In order to get a running hamster, there are a few prerequisites.
 
-  - check if pull request source is mergeable
-  - run aribitrary shell command on the on-disk representation of a source
-    - flake8-diff is the only currently configured shell command
+## Prerequisites
+### 1. Environment variables
+Hamster requires some information, stored in environment variables.
 
-The only supported output is github issue comment.  A templating system
-is made available for all outputs, so that the user can specify the text
-made in the comment.
+Required variables are:
 
-## Configuration example
-The following configuration (expressed here as JSON) will listen for a webhook 
-push for a new pull request for the repo "DT2/dt", and will run flake8diff 
-on the checked-out pull request:
+  - HAMSTER_GITHUB_API_TOKEN - a valid github API token
+  - HAMSTER_GITHUB_API_USERNAME - username for above token
+These variables are used for connectig to github via it's ReST API.
 
-    {
-        "name": "flake8_pull_request",
-        "source": {
-            "source_class": "pull_request",
-            "criteria": {
-                "repo": "DT2/dt"
-            }
-        },
-        "actions": [
-            {
-                "name": "flake8diff",
-                "task": "flake8_diff",
-                "failure_handler": {
-                    "name": "notify_error",
-                    "task": "pull_request_comment",
-                    "kwargs": {
-                        "template": "Flake8 violations:\n\n{{ parent.output|indent(4, True) }}"
-                    }
-                }
-            }
-        ]
-    }
+Optional supported variables are:
+
+  - HAMSTER_GITHUB_HOST - hostname for a github enterprise instance, if used
+  - NO_PROXY - proxy ignores if running behind corp proxy
+  
+### 2. Files
+Hamster requires a keypair that can connect to github, in order to access
+repositories using the git protocol, and therefore requires the following files:
+
+  - github.key
+  - github.pub
+  
+Place these files in the source root before deployment.
+
+## Deployment
+In order to deploy, simply run the following:
+
+    docker-compose build
+    docker-compose up -d
     
-Note here that `parent` refers to the return value of the `flake8_diff` task,
-which is an instance of the class `CommandResult` which has an `output` attribute
-that contains the stderr of the failed command.
+Use `docker-compose scale` to scale out your hamster when required.
 
-In reality, this blob is stored in two model classes (Configuration and ConfigurationSource).
+Hamster provides a Makefile containing commonly used commands.
 
-## Success/failure handlers
-Each configured action can define success and failure handler.  These are actions
-themselves, that are conditionally executed based on the result of the parent action.
-The return value of the parent action is inspected, and if it is truthy, the success
-handler is executed (otherwise, the failure handler).  Handlers are optional.
-Note that this is distinct from celery's notion of task success and failure;
-*task* failure should only occur if there is an exception that prevents the
-execution of the task.  In pipeline, we want to distinguish between the 
-failure of the task itself and the failure of the command executed by the
-task (in fact, handlers are only executed if the task had a SUCCESS status).
 
-An example of a failure handler might be a pull request comment that is
-made only when the flake8-diff command returned a failure exit code 
-(indicating that there were flake8 violations).
+### Authentication
+Upon deployment, one superuser is created for django admin: 
 
-## Local setup
-Note: you must set up ssh keys for communication with github.
-Additinally, you must provide a github application token in the
-environment variable PIPELINE_GITHUB_TOKEN.
+    hamster:hamster
 
-Will use sqlite database.
+### Deployment testing
+A dev version of docker-compose.yml is provided.  Additionally, hamster
+will install, into the docker container, any python modules found in the root 
+directory during deployment.
+
+## Running locally
+TODO does this work anymore?
+If you wish to test hamster out without docker, you can.
+You will need redis running, and two terminals (app/worker).
+This will use sqlite as the database.
 
 ### Install
 
-
     VIRTUALENV_PYTHON=`which python3` mkvirtualenv hamster-ci
     workon hamster-ci
-    pip3 install -r requirements/base.txt -i https://pypi.python.org/simple
-    DJANGO_SETTINGS_MODULE=hamster.settings python hamster/manage.py migrate
-    DJANGO_SETTINGS_MODULE=hamster.settings python hamster/manage.py createsuperuser
-    
-#### OSX
-Had some issues. May need to run before installing requirements:
-
-    pip3 install --upgrade pip
-    brew install pkg-config libffi
-    export PKG_CONFIG_PATH=/usr/local/Cellar/libffi/3.0.13/lib/pkgconfig/
-    
-    ref: https://github.com/pypa/pip/issues/2104
-    ref: http://stackoverflow.com/questions/22875270/error-installing-bcrypt-with-pip-on-os-x-cant-find-ffi-h-libffi-is-installed
-
-    
-#### Local dev install
-
-    VIRTUALENV_PYTHON=`which python3` mkvirtualenv hamster-ci
-    workon hamster-ci
-    pip3 install -r requirements/base.txt  -r requirements/tests.txt -i https://pypi.python.org/simple
+    pip install -r requirements.txt -r requirements-runtime.txt
     DJANGO_SETTINGS_MODULE=hamster.local_settings python hamster/manage.py migrate
+    # below is an interactive command
     DJANGO_SETTINGS_MODULE=hamster.local_settings python hamster/manage.py createsuperuser
     
 ### Run
@@ -170,114 +153,34 @@ Had some issues. May need to run before installing requirements:
     export PIPELINE_GITHUB_TOKEN=abcdefg123456
     export DJANGO_SETTINGS_MODULE=hamster.local_settings 
     celery -A hamster worker -l debug
-
-#### Authentication
-One superuser is created for django admin: 
-
-    hamster:hamster
     
-## Deployment
-Hamster CI is deployed using docker and fig (aka docker-compose).
 
-The application architecture includes:
+# Technical details
+## Event
+Input data is deserialized to one or more `Event`s.  An example
+event is "pull request comment".  Each event type exposes some properties to the rest 
+of the system; a mandatory `source`, which for the above example would be a 
+`PullRequest`, and optional other event data, like an `IssueComment` containing
+the body and author of the comment.
 
-  - celery worker/s
-  - gunicorn app workers
-  - nginx for static files and for proxying to gunicorn
-  - redis as the broker (TODO: rabbitmq)
-  - postgresql database
-  
-### Host requirements
+## Event handler
+After input is deserialized and one or more events fire, the system
+is searched for matching event handlers.  Event handlers are created by the
+end-user and are stored in the database.  Each handler specifies the conditions
+under which it is relevant, and the actions that should be executed when
+those conditons are met. So, and event handler can specify that actions X and Y 
+should be executed when a pull request is opened for repository Z.
 
-    - lxc-docker (*not* docker.io pkg)
-    - fig
-    
-In order to make the docker daemon work behind a proxy, you need to add some 
-configuration to your system, which varies depending on the host os.
+## Actions
+Actions are functions that internally are encapsulated in celery tasks.
+Arguments stored in the event handler (and templated at runtime) are applied
+to the functions and scheduled to be executed by a worker.
 
-Docker deployments also require ssh keypair in github.key/github.pub files with the 
-public key registered in github, as well as user and email configured in the
-gitconfig file.
-
-### Local deployment
-#### First deployment
-The first deployment will initialize the database.  Subsequent deployments should not.
-
-    make scratch
-    
-#### Subsequent deployments
-If any requirements have changed, or any change requiring a docker rebuild:
-
-    make update
-    
-If only python code has changed, you can get away with:
-
-    make restart
-
-#### Adding workers
-Both app and celery worker have a default concurrency of 2, which is overridden
-in the docker deployment to 6 (each).
-
-In order to add more worker containers:
-
-    fig scale worker=N
-    fig scale app=N
-
-(I have not tried this yet)
-
-### Remote deployment
-You must use a different virtualenv for remote deployment, since Fabric does 
-not yet support python3.
-
-	mkvirtualenv deployenv
-	workon deployenv
-    pip install -r requirements/deploy.txt
-        
-#### First deployment
-
-    fab install:/home/username/hamster,git@github.dev.dealertrack.com:mike/hamster -H 1.2.3.4 -u username
-    
-#### Subsequent deployments
-
-    fab deploy:/home/username/hamster
-    
-#### Jenkins CI
-
-	virtualenv .
-	. bin/activate
-	pip install -r requirements/deploy.txt
-	fab deploy:/home/username/hamster -H 1.2.3.4 -u username
-
-## Adding code to pipeline
-
-### Modules
-Modules you want to use must be imported in pipeline.__init__.
-This initializes registration of the classes contained in the module.
-
-# The future
-Build on pipeline to create a github comment bot, and use that bot to implement a review system for pull requests.
-
-The system can leverage an external library that does static analysis??
-
-
-# Issues
-- need to disable strict host key chexking for github in order t run the tests, 
-or to checkout anything.
-http://serverfault.com/questions/447028/non-interactive-git-clone-ssh-fingerprint-prompt
-$ echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-
-
-# Tips
-
-
-
-
-   Debugging an installed app or library inside hamster
-   1. grab the source a sa submodule in your hamster working directory (on th ehost)
-    - git submodule init
-    - git submodule add <git url>
-   2. Add the following line to worker.sh and app.sh, right before the last line:
-     pip install -e /hamster/<library name>
-
-    Use the 'make develop' command every time you reloa,d it will mount the source
-    in as a volume, with your changes.  You do need to reload for every change, though.
+## Callbacks
+When configuring event handlers, users can specify callbacks to be 
+executed based on the return value of an action.  These callbacks are themselves 
+actions.  Callbacks are typically used to provide a notification of the status
+of an action, for instance emitting a pull request comment with the action's
+output, or changing the commit status or the pull request's HEAD (this feature
+is in progress).
+me, with your changes.  You do need to reload for every change, though.
