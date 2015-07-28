@@ -25,6 +25,7 @@ app:
   command: ./app.sh
   environment:
     - HAMSTER_GITHUB_API_TOKEN
+    - HAMSTER_GITHUB_API_USERNAME
     - HAMSTER_GITHUB_HOST
     - DJANGO_SETTINGS_MODULE=hamster.settings
     - NUM_WORKERS=6
@@ -43,6 +44,7 @@ worker:
   user: hamster
   environment:
     - HAMSTER_GITHUB_API_TOKEN
+    - HAMSTER_GITHUB_API_USERNAME
     - HAMSTER_GITHUB_HOST
     - DJANGO_SETTINGS_MODULE=hamster.settings
     - NUM_WORKERS=4
