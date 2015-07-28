@@ -10,6 +10,8 @@ import sys
 import json
 from bottle import route, run, request
 
+
+PORT=9000
 @route('/github-api/hook/', method='POST')
 def hookdump():
     if request.content_type == 'application/x-www-form-urlencoded':
@@ -28,4 +30,4 @@ if len(sys.argv) > 1:
 else:
     dumpfile = 'data.json'
 
-run(host='0.0.0.0', port=9000, debug=True)
+run(host='0.0.0.0', port=PORT, debug=True)
