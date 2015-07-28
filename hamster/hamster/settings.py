@@ -31,7 +31,7 @@ CELERY_ACCEPT_CONTENT = ['pickle']
 CELERY_RESULT_SERIALIZER = CELERY_TASK_SERIALIZER = 'pickle'
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']  # FIXME
 
 INSTALLED_APPS = (
     'django.contrib.admin',
