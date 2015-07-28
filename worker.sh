@@ -4,7 +4,6 @@
 # Much of this cannot be done in the Dockerfile,
 # since we only know the github host at runtime
 
-DEBUG=${HAMSTER_DEBUG:1}
 NUM_WORKERS=${NUM_WORKERS:-2}
 
 source util.sh
@@ -19,7 +18,7 @@ export no_proxy="localhost,${HAMSTER_GITHUB_HOST}"
 export NO_PROXY=${no_proxy}
 
 # debug github connectivity
-[[ $DEBUG -eq 0 ]] && curl -I "https://${HAMSTER_GITHUB_HOST}/api"
+[[ ! -z $HAMSTER_DEBUG ]] && curl -I "https://${HAMSTER_GITHUB_HOST}/api"
 
 
 #TODO: only do this if it's not already set
@@ -28,9 +27,9 @@ ssh-keyscan -t rsa ${HAMSTER_GITHUB_HOST} 2>&1 >> /home/hamster/.ssh/known_hosts
 
 # debug github auth
 if [[ ! -z $HAMSTER_GITHUB_HOST ]]; then
-	[[ $DEBUG -eq 0 ]] && ssh -vT git@${HAMSTER_GITHUB_HOST}
+	[[ ! -z $HAMSTER_DEBUG ]] && ssh -vT git@${HAMSTER_GITHUB_HOST}
 fi
 
-develop_pkgs
+[[ ! -z $HAMSTER_DEBUG ]] && develop_pkgs
 
 su -m hamster -c "cd hamster && celery worker -A hamster --concurrency=${NUM_WORKERS}"

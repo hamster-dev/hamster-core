@@ -122,7 +122,7 @@ Upon deployment, one superuser is created for django admin:
 ### Deployment testing
 A dev version of docker-compose.yml is provided.  Additionally, hamster
 will install, into the docker container, any python modules found in the root 
-directory during deployment.
+directory during deployment, if $HAMSTER_DEBUG env var is set.
 
 ## Running locally
 TODO does this work anymore?

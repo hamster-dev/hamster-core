@@ -1,6 +1,5 @@
 osxenv
 *.pyc
-# a file I am using to push private env vars
 /*.env
 .Python
 *.egg-info
