@@ -1,1 +1,1 @@
-Fabric
+Fabric==1.10
