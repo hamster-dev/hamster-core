@@ -15,6 +15,7 @@
 FROM python:3.4
 
 RUN apt-get update
+
 # These are broken out b/c the network where I'm writing code is hella flaky,
 # the docker image layer cache is a huge boon.
 RUN apt-get -y install postgresql-client
@@ -22,7 +23,12 @@ RUN apt-get -y install sudo
 
 # Why this line is required, again, I will *never* understand.
 RUN apt-get update
-# Even though the app runs on py3, we still need to support py2 tasks
+
+# Even though the app runs on py3, we still need to support py2 tasks.
+# This will be removed once we can direct tasks to celery workers
+# based on the workspace type requested by the user.  For now, all
+# workers will get a python2 install, since that is what we need hamster
+# for.
 RUN apt-get -y install python2.7
 RUN apt-get -y install python-pip
 RUN apt-get -y install python-virtualenv
