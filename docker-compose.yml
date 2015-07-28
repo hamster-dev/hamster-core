@@ -41,7 +41,6 @@ app:
 worker:
   build: .
   command: ./worker.sh
-  user: hamster
   environment:
     - HAMSTER_GITHUB_API_TOKEN
     - HAMSTER_GITHUB_API_USERNAME
