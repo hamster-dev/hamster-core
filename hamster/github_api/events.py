@@ -84,7 +84,7 @@ class PullRequestEvent(GithubEvent):
     __id = 'pull_request'
     hook_event = 'pull_request'
     valid_actions = [
-        'opened', 'synchronized', 'closed', 'labeled', 'assigned', 'reopened'
+        'opened', 'synchronize', 'closed', 'labeled', 'assigned', 'reopened'
     ]
 
     @cached_property
