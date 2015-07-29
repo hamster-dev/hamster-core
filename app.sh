@@ -12,7 +12,7 @@ source util.sh
 # block until postgres is available (or else django migrate will fail)
 check_up "postgres" ${DB_PORT_5432_TCP_ADDR} 5432
 
-[[ ! -z $HAMSTER_DEBUG ]] && develop_pkgs
+develop_pkgs
 
 cd hamster
 

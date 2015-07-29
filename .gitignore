@@ -1,6 +1,6 @@
 osxenv
 *.pyc
-/*.env
+*.swp
 .Python
 *.egg-info
 *.sqlite3

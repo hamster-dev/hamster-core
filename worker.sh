@@ -30,6 +30,6 @@ if [[ ! -z $HAMSTER_GITHUB_HOST ]]; then
 	[[ ! -z $HAMSTER_DEBUG ]] && ssh -vT git@${HAMSTER_GITHUB_HOST}
 fi
 
-[[ ! -z $HAMSTER_DEBUG ]] && develop_pkgs
+develop_pkgs
 
 su -m hamster -c "cd hamster && celery worker -A hamster --concurrency=${NUM_WORKERS}"

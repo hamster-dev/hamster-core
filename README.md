@@ -112,6 +112,7 @@ In order to deploy, simply run the following:
 Use `docker-compose scale` to scale out your hamster when required.
 
 Hamster provides a Makefile containing commonly used commands.
+The `make scratch` command will install the system from nothing.
 
 
 ### Authentication

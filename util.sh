@@ -21,7 +21,7 @@ check_up() {
 }
 
 develop_pkgs() {
-    # if in develop mode, install all python packages in hamster app dir
+    # install all python packages in app dir
     if [[ ! -z $HAMSTER_DEVELOP ]]; then
         echo "installing pkgs"
         for f in `find . -mindepth 2 -type f -name setup.py`; do
