@@ -71,6 +71,7 @@ class PipelineEventHandler(models.Model):
     events = JSONField(default=[])
     criteria = JSONField(null=True)
     actions = JSONField()
+    composition = models.CharField(max_length=32, default='chain')
     enabled = models.BooleanField(default=True, null=False)
     app_name = models.CharField(max_length=64, blank=True)
 
@@ -118,8 +119,8 @@ class PipelineEventHandler(models.Model):
                     continue
 
                 source = event.data['source']
-                task_actions = [TaskAction.from_dict(dct) for dct in handler.actions]
-                pl = Pipeline(task_actions)
+                task_actions = [cls.action_from_dict(dct) for dct in handler.actions]
+                pl = Pipeline(task_actions, composition=handler.composition)
 
                 async_results.append(pl.schedule(
                     source,
@@ -129,3 +130,32 @@ class PipelineEventHandler(models.Model):
             async_results.extend(event.fire(event_handlers))
 
         return async_results
+
+    @staticmethod
+    def action_from_dict(dct):
+        """Build task action from dictionary.
+        """
+        callbacks = []  # list of tuples
+        if 'callbacks' in dct:
+            for item in dct['callbacks']:
+                # because predicate is not a normal task attribute, pop it before serializing
+                # default of 'True' will cuase it to always execute.
+                predicate = item.pop('predicate', 'True')
+                callbacks.append((
+                    PipelineEventHandler.action_from_dict(item),
+                    predicate
+                ))
+
+        workspace_cls = dct.get('workspace')
+        workspace_kwargs = dct.get('workspace_kwargs')
+
+        task_action = TaskAction(
+            dct['action'],
+            name=dct.get('name'),
+            callbacks=callbacks,
+            workspace=workspace_cls,
+            workspace_kwargs=workspace_kwargs,
+            **dct.get('kwargs', {})
+        )
+
+        return task_action
