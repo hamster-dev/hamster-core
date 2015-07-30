@@ -126,33 +126,38 @@ will install, into the docker container, any python modules found in the root
 directory during deployment, if $HAMSTER_DEBUG env var is set.
 
 ## Running locally
-TODO does this work anymore?
 If you wish to test hamster out without docker, you can.
 You will need redis running, and two terminals (app/worker).
 This will use sqlite as the database.
+Github ssh authentication will default to your user account's ssh keys.
 
 ### Install
 
-    VIRTUALENV_PYTHON=`which python3` mkvirtualenv hamster-ci
-    workon hamster-ci
-    pip install -r requirements.txt -r requirements-runtime.txt
-    DJANGO_SETTINGS_MODULE=hamster.local_settings python hamster/manage.py migrate
-    # below is an interactive command
-    DJANGO_SETTINGS_MODULE=hamster.local_settings python hamster/manage.py createsuperuser
+    VIRTUALENV_PYTHON=`which python3` mkvirtualenv hamster
+    pip install -r requirements.txt
+    export DJANGO_SETTINGS_MODULE=hamster.local_settings 
+    python hamster/manage.py migrate
+    # below is an interactive command. if you wish to script it, see example in app.sh
+    python hamster/manage.py createsuperuser
     
 ### Run
 #### Web app
 
-    cd hamster
-    export PIPELINE_GITHUB_TOKEN=abcdefg123456
+    workon hamster
+    export HAMSTER_GITHUB_API_TOKEN=abcdefg123456
+    export HAMSTER_GITHUB_API_USER=username
+    export HAMSTER_GITHUB_HOST=github-enterprise.whatever  # optional
     export DJANGO_SETTINGS_MODULE=hamster.local_settings 
-    gunicorn hamster.wsgi:application
+    python hamster/manage.py runserver
 
 #### Worker
 
-    cd hamster
-    export PIPELINE_GITHUB_TOKEN=abcdefg123456
+    workon hamster
+    export HAMSTER_GITHUB_API_TOKEN=abcdefg123456
+    export HAMSTER_GITHUB_API_USER=username
+    export HAMSTER_GITHUB_HOST=github-enterprise.whatever  # optional
     export DJANGO_SETTINGS_MODULE=hamster.local_settings 
+    cd hamster
     celery -A hamster worker -l debug
     
 

@@ -32,7 +32,7 @@ def github_webhook(request):
         # ignore the return value, we don't care.
         handle_github_events(event_type, request_data)
 
-    except Exception as ex:
+    except:
         import sys, traceback
         ex_type, ex, tb = sys.exc_info()
         logger.error("{}\n{}".format(str(ex), traceback.format_tb(tb)))
