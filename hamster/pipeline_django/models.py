@@ -1,7 +1,11 @@
 from django.db import models
 
 from jsonfield import JSONField
+
+from pipeline.actions import TaskAction
 from pipeline.eval import evaluate_criteria
+from pipeline.executor import Executor
+
 from pipeline_django.event import EventHandler
 
 import logging
@@ -72,13 +76,6 @@ class PipelineEventHandler(models.Model):
     enabled = models.BooleanField(default=True, null=False)
     app_name = models.CharField(max_length=64, blank=True)
 
-    def get_event_handler(self, cls=EventHandler):
-        return cls(
-            self.name,
-            self.events,
-            self.criteria,
-            self.actions
-        )
 
     @classmethod
     def search(cls, event, app_name=''):
@@ -93,7 +90,7 @@ class PipelineEventHandler(models.Model):
                 continue
 
             if evaluate_criteria(event.data, stored_handler.criteria):
-                results.append(stored_handler.get_event_handler())
+                results.append(stored_handler)
 
         return results
 
@@ -118,7 +115,19 @@ class PipelineEventHandler(models.Model):
             )
             logger.debug("found event handlers {}".format(event_handlers))
 
-            async_results.extend(event.fire(event_handlers))
+            for handler in event_handlers:
+                if not handler.enabled:
+                    continue
 
+                source = event.data['source']
+                executor = Executor()
+
+                async_results.append(executor.schedule(
+                    [TaskAction.from_dict(dct) for dct in handler.actions],
+                    source,
+                    **event.data
+                ))
+
+            async_results.extend(event.fire(event_handlers))
 
         return async_results
