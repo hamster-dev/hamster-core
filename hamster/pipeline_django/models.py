@@ -4,9 +4,7 @@ from jsonfield import JSONField
 
 from pipeline.actions import TaskAction
 from pipeline.eval import evaluate_criteria
-from pipeline.executor import Executor
-
-from pipeline_django.event import EventHandler
+from pipeline.pipeline import Pipeline
 
 import logging
 
@@ -120,10 +118,10 @@ class PipelineEventHandler(models.Model):
                     continue
 
                 source = event.data['source']
-                executor = Executor()
+                task_actions = [TaskAction.from_dict(dct) for dct in handler.actions]
+                pl = Pipeline(task_actions)
 
-                async_results.append(executor.schedule(
-                    [TaskAction.from_dict(dct) for dct in handler.actions],
+                async_results.append(pl.schedule(
                     source,
                     **event.data
                 ))
