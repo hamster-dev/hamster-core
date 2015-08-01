@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from rest_framework.decorators import api_view
 
-from pipeline_django.models import PipelineEventHandler
+from pipeline_django.event import EventHandler
 
 from github_api.events import GithubEvent
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def handle_github_events(event_type, request_data):
     """Route github events to the appropriate event handler."""
 
-    return PipelineEventHandler.handle_events(
+    return EventHandler.handle_events(
         GithubEvent, request_data, event_type
     )
 
