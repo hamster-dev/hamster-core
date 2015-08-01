@@ -4,6 +4,10 @@
 Mock HTTP server for generating github api webhook fixtures.
 Accepts calls destined for github-api view and dumps to `dumpfile`/data.json.
 Requires bottle library.
+
+Note: you can avoid having to use this completely by going to your
+repository's webhook settings and copying the JSON from one of the
+hooks in the webhook logs.
 """
 
 import sys

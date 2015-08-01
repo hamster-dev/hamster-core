@@ -135,13 +135,13 @@ class PipelineEventHandler(models.Model):
     def action_from_dict(dct):
         """Build task action from dictionary.
         """
-        callbacks = []  # list of tuples
-        if 'callbacks' in dct:
-            for item in dct['callbacks']:
+        hooks = []  # list of tuples
+        if 'hooks' in dct:
+            for item in dct['hooks']:
                 # because predicate is not a normal task attribute, pop it before serializing
                 # default of 'True' will cuase it to always execute.
                 predicate = item.pop('predicate', 'True')
-                callbacks.append((
+                hooks.append((
                     PipelineEventHandler.action_from_dict(item),
                     predicate
                 ))
@@ -152,7 +152,7 @@ class PipelineEventHandler(models.Model):
         task_action = TaskAction(
             dct['action'],
             name=dct.get('name'),
-            callbacks=callbacks,
+            hooks=hooks,
             workspace=workspace_cls,
             workspace_kwargs=workspace_kwargs,
             **dct.get('kwargs', {})
