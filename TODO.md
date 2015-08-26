@@ -19,21 +19,18 @@
     - fix github host key veirification in worker.sh
     
     
-###Pipeline:
-    - attach callbacks to an entire pipeline
-    - parallel task composition using group    
-    - rename TaskAction to CeleryAction 
-    - dont log all the output of a shell command to the logger
-    
-    
 ###Cleanup
     - readme to md
 
-
+###Events
+    - suppost only one event per input, where the most specific event matches.
+    this would likely be the lowest-level subclass
+    
 ###General
     - fix proxy handling
     - create special property for events.  they shouldnt need to define both 
     properties and `data`, since `data` should expose ony those properties
+    - Better logging for event handling (info about each event)
     
 
 ###Ideas

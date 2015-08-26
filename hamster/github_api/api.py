@@ -14,10 +14,13 @@ logger = logging.getLogger(__name__)
 
 def handle_github_events(event_type, request_data):
     """Route github events to the appropriate event handler."""
+    events = GithubEvent.find_matching(request_data,event_type)
+    if not len(events):
+        return []
 
-    return EventHandler.handle_events(
-        GithubEvent, request_data, event_type
-    )
+    logger.debug("found events {}".format(events))
+    return EventHandler.handle_events(events)
+
 
 hook_methods = ('POST',) if not settings.DEBUG else ('POST', 'GET')
 

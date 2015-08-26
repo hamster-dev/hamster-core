@@ -29,11 +29,13 @@ class Event(metaclass=Registry):
         self._input_data = input_data
 
     @classmethod
-    def find_relevant(cls, input_data):
-        """Find events relevant to a given input.
-        Multiple events may match a single input.
+    def find_matching(cls, input_data):
+        """Find events that match a given input.
+
         Matches the events criteria against the event-specific
         deserialized input data.
+
+        Multiple events may match a single input.
         """
         available = cls.getlist()
         found = []
@@ -76,6 +78,8 @@ class Event(metaclass=Registry):
         """
         return getattr(self, '_{}__id'.format(self.__class__.__name__))
 
+
+
 class EventHandler(object):
 
     @classmethod
@@ -95,39 +99,47 @@ class EventHandler(object):
 
         return results
 
+    @classmethod
+    def handle_event(cls, event, handler):
+        """Fire a single event handler.
+        :returns: async result if success, None otherwise
+        """
+        if not handler.enabled:
+            return
+
+        data = event.data.copy()
+        source = data.pop('source')
+        task_actions = [cls.action_from_dict(dct) for dct in handler.actions]
+        pl = Pipeline(task_actions, composition=handler.composition)
+
+        return pl.schedule(
+            source,
+            **data
+        )
 
     @classmethod
-    def handle_events(cls, event_klass, *args, **kwargs):
+    def handle_events(cls, events):
         """Route events to the stored event handler."""
-        events = event_klass.find_relevant(
-            *args, **kwargs
-        )
-        if not len(events):
-            return []
 
-        logger.debug("found events {}".format(events))
         async_results = []
+
         for event in events:
 
             event_handlers = cls.search(
                 event
             )
-            logger.debug("found event handlers {}".format(event_handlers))
+            if not event_handlers:
+                logger.debug("no event handlers for".format(event))
+                continue
+
+            logger.debug(
+                "found event handlers {} for event {}".format(event_handlers, event)
+            )
 
             for handler in event_handlers:
-                if not handler.enabled:
-                    continue
-
-                source = event.data['source']
-                task_actions = [cls.action_from_dict(dct) for dct in handler.actions]
-                pl = Pipeline(task_actions, composition=handler.composition)
-
-                async_results.append(pl.schedule(
-                    source,
-                    **event.data
-                ))
-
-            async_results.extend(event.fire(event_handlers))
+                ret = cls.handle_event(event, handler)
+                if ret:
+                    async_results.append(ret)
 
         return async_results
 

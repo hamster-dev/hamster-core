@@ -30,7 +30,7 @@ class GithubEvent(Event):
     valid_actions = []
 
     @classmethod
-    def find_relevant(cls, input_data, hook_event_name):
+    def find_matching(cls, input_data, hook_event_name):
         """Get the event types that listen for a given webhook http request.
 
         hook_event_name is extracted from http header, so it is not
