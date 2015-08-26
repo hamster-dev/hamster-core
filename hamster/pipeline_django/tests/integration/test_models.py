@@ -1,6 +1,6 @@
 import pytest
 
-from pipeline_django.event import Event, EventHandler
+from pipeline_django.event import Event
 from pipeline_django.models import PipelineEventHandler
 
 
@@ -45,7 +45,7 @@ def test_eventhandler_execution(db, scoped_broker):
     )
     events = WhateverEvent.find_matching(DummySource())
 
-    results = EventHandler.handle_events(events)
+    results = PipelineEventHandler.objects.handle_events(events)
     assert len(results) == 1
 
     result = results[0].get()
@@ -83,7 +83,7 @@ def test_eventhandler_execution_with_hooks(db, scoped_broker):
     )
     events = WhateverEvent.find_matching(DummySource())
 
-    EventHandler.handle_events(events)[0].get()
+    PipelineEventHandler.objects.handle_events(events)[0].get()
 
     from .tasks import increment_call_count
     assert increment_call_count.call_count == 4
@@ -110,7 +110,7 @@ def test_eventhandler_shell_execution(db, scoped_broker):
         ]
     )
     events = WhateverEvent.find_matching(DummySource())
-    results = EventHandler.handle_events(events)
+    results = PipelineEventHandler.objects.handle_events(events)
 
     assert len(results) == 1
 

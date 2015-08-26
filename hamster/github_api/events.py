@@ -18,7 +18,7 @@ from pipeline_django.event import Event
 from github_api.sources import IssueComment, PullRequest
 
 
-class GithubEvent(Event):
+class GithubWebhookEvent(Event):
     """Base class for github webhook events.
 
     :attribute hook_event: the github webhook event that
@@ -30,7 +30,7 @@ class GithubEvent(Event):
     valid_actions = []
 
     @classmethod
-    def find_matching(cls, input_data, hook_event_name):
+    def find_matching(cls, request):
         """Get the event types that listen for a given webhook http request.
 
         hook_event_name is extracted from http header, so it is not
@@ -40,10 +40,11 @@ class GithubEvent(Event):
             - filter by those that listen to the provided hook action
         """
         # find events with a `hook_event` that matches the given hook
+        hook_event_name = request.META.get('HTTP_X_GITHUB_EVENT')
         registered_for_hook = Event.find('hook_event', hook_event_name)
 
         # filter those events by the hook action
-        action = input_data.get('action')
+        action = request.data.get('action')
         if action:
             registered_for_hook = filter(
                 lambda klass: action in klass.valid_actions, registered_for_hook
@@ -53,11 +54,11 @@ class GithubEvent(Event):
         # event criteria to input data
         found = []
         for klass in registered_for_hook:
-            instance = klass(input_data)
+            instance = klass(request.data)
             if instance._is_relevant():
                 found.append(instance)
 
-        return found
+        return sorted(found)
 
     @cached_property
     def action(self):
@@ -71,14 +72,21 @@ class GithubEvent(Event):
         are more specific instances of a given event.
         e.g. "pull_request.opened"
         """
-        base_name = super(GithubEvent, self).name
+        base_name = super(GithubWebhookEvent, self).name
         return "{}.{}".format(base_name, self.action)
 
     def __repr__(self):
         #TODO: move to pipeline, in base class
         return "{}/{}/{}".format(self.__class__.__name__, self.name, type(self.source))
 
-class PullRequestEvent(GithubEvent):
+    def __lt__(self, other):
+        """In order to order events, we need them to be orderable.
+        Just  order them by event name, as this is only needed for tests (for now)
+        """
+        return self.name < other.name
+
+
+class PullRequestEvent(GithubWebhookEvent):
     """Pull Request github webhook event.
     """
     __id = 'pull_request'
@@ -94,7 +102,7 @@ class PullRequestEvent(GithubEvent):
         )
 
 
-class PullRequestIssueCommentEvent(GithubEvent):
+class PullRequestIssueCommentEvent(GithubWebhookEvent):
     """Issue Comment github webhook event.
     Only relevant for pull request comments (which are a variant
     of issue comment); if you want to implement issue comment handling,

@@ -40,6 +40,7 @@ def pullrequest_hook_open_data():
 
     return json.loads(data)
 
+
 @pytest.fixture
 def pullrequestcomment_hook_create_data():
     """Returns a json string for pullrequest issue comment webhook
@@ -47,6 +48,20 @@ def pullrequestcomment_hook_create_data():
     pth = os.path.join(
         FIXTURES_BASE,
         'fixtures', 'webhooks', 'pullrequest_comment.created.json'
+    )
+    with open(pth, 'r') as fh:
+        data = fh.read()
+
+    return json.loads(data)
+
+
+@pytest.fixture
+def pullrequestcomment_hook_prbuilder_success_data():
+    """Returns a json string for pullrequest issue comment webhook
+    """
+    pth = os.path.join(
+        FIXTURES_BASE,
+        'fixtures', 'webhooks', 'prbuilder_status.succeeded.json'
     )
     with open(pth, 'r') as fh:
         data = fh.read()

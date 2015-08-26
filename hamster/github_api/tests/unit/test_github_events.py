@@ -11,7 +11,7 @@ except ImportError:
     from unittest import mock
 
 from github_api.events import (
-    GithubEvent, PullRequestEvent, PullRequestIssueCommentEvent,
+    GithubWebhookEvent, PullRequestEvent, PullRequestIssueCommentEvent,
 )
 
 
@@ -28,7 +28,11 @@ def test_event_matching_pullrequest(monkeypatch):
         data = {
             'action': action
         }
-        events = GithubEvent.find_matching(data, hook)
+        request = mock.Mock()
+        request.data = data
+        request.META = {'HTTP_X_GITHUB_EVENT': hook}
+
+        events = GithubWebhookEvent.find_matching(request)
         assert len(events) == 1
         assert isinstance(events[0], PullRequestEvent)
 
@@ -36,7 +40,11 @@ def test_event_matching_pullrequest(monkeypatch):
         data = {
             'action': action
         }
-        events = GithubEvent.find_matching(data, hook)
+        request = mock.Mock()
+        request.data = data
+        request.META = {'HTTP_X_GITHUB_EVENT': hook}
+
+        events = GithubWebhookEvent.find_matching(request)
         assert len(events) == 0
 
 
@@ -57,7 +65,11 @@ def test_event_matching_pr_comment(monkeypatch):
                 'issue': {'pull_request': 'qwerty'}
             }
 
-            events = GithubEvent.find_matching(data, hook)
+            request = mock.Mock()
+            request.data = data
+            request.META = {'HTTP_X_GITHUB_EVENT': hook}
+
+            events = GithubWebhookEvent.find_matching(request)
             assert len(events) == 1
             assert 'pull_request_comment.created' in [e.name for e in events]
 
@@ -66,7 +78,11 @@ def test_event_matching_pr_comment(monkeypatch):
         data = {
             'action': action
         }
-        events = GithubEvent.find_matching(data, hook)
+        request = mock.Mock()
+        request.data = data
+        request.META = {'HTTP_X_GITHUB_EVENT': hook}
+
+        events = GithubWebhookEvent.find_matching(request)
         assert len(events) == 0
 
 
@@ -86,7 +102,11 @@ def test_event_matching_jenkins_comment_success(monkeypatch):
                 'issue': {'pull_request': 'qwerty'}
             }
 
-            events = GithubEvent.find_matching(data, hook)
+            request = mock.Mock()
+            request.data = data
+            request.META = {'HTTP_X_GITHUB_EVENT': hook}
+
+            events = GithubWebhookEvent.find_matching(request)
             assert len(events) == 2
             assert 'prbuilder_status.succeeded' in [e.name for e in events]
 
@@ -107,6 +127,10 @@ def test_event_matching_jenkins_comment_failed(monkeypatch):
                 'issue': {'pull_request': 'qwerty'}
             }
 
-            events = GithubEvent.find_matching(data, hook)
+            request = mock.Mock()
+            request.data = data
+            request.META = {'HTTP_X_GITHUB_EVENT': hook}
+
+            events = GithubWebhookEvent.find_matching(request)
             assert len(events) == 2
             assert 'prbuilder_status.failed' in [e.name for e in events]

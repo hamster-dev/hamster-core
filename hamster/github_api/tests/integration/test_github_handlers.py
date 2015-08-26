@@ -135,8 +135,11 @@ def test_event_handler_tasks_executed(db, pullrequest_hook_open_data):
             }
         ]
     )
+    request = mock.Mock()
+    request.data = pullrequest_hook_open_data
+    request.META = {'HTTP_X_GITHUB_EVENT': 'pull_request'}
 
-    task_results = handle_github_events('pull_request', pullrequest_hook_open_data)
+    task_results = handle_github_events(request)
 
     assert len(task_results) == 1
     build_context = task_results[0].get()
