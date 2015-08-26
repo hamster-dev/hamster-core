@@ -5,7 +5,7 @@ Simple event registration system.
 from cached_property import cached_property
 
 from pipeline.bases import Registry
-from pipeline.actions import TaskAction
+from pipeline.actions import TaskAction, ActionHook
 from pipeline.eval import evaluate_criteria
 from pipeline.pipeline import Pipeline
 
@@ -147,16 +147,21 @@ class EventHandler(object):
     def action_from_dict(dct):
         """Build task action from dictionary.
         """
-        hooks = []  # list of tuples
-        if 'hooks' in dct:
-            for item in dct['hooks']:
-                # because predicate is not a normal task attribute, pop it before serializing
-                # default of 'True' will cuase it to always execute.
-                predicate = item.pop('predicate', 'True')
-                hooks.append((
-                    PipelineEventHandler.action_from_dict(item),
-                    predicate
-                ))
+        hooks = []
+
+        # Each hook should have the same keys as an action,
+        # except for the additional 'event' and 'predicate' keys,
+        # and it should not have it's own hooks
+        for hook in dct.get('hooks', []):
+            # because predicate is not a normal task attribute, pop it before serializing
+            # default of 'True' will cuase it to always execute.
+            predicate = hook.pop('predicate', None)
+            event = hook.pop('event', None)
+            hooks.append(ActionHook(
+                EventHandler.action_from_dict(hook),
+                predicate=predicate,
+                event=event
+            ))
 
         workspace_cls = dct.get('workspace')
         workspace_kwargs = dct.get('workspace_kwargs')
