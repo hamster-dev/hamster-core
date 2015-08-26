@@ -1,17 +1,10 @@
-import os
-import mock
 import pytest
-import json
-
-
-from pipeline_django.event import EventHandler
 
 from pipeline_django.event import Event
 
 
-
 class CriteriaEvent(Event):
-    __abstract = True
+    pass
 
 class FooEvent(CriteriaEvent):
     __id = 'foo_event'

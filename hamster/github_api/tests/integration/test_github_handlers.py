@@ -61,19 +61,18 @@ def event_handlers(db):
     )
 
 
-
 def test_event_handler_actions_scheduled(db, monkeypatch, pullrequest_hook_open_data):
     """Test that Executor.schedule() is called for a given event/handler"""
     # stick something in the database; 'db' fixture will ensure it's
     # deleted after the test
     PipelineEventHandler.objects.create(
-        name="pull_request_open_hamster-five",
+        name="pull_request_open",
         events=[
             'pull_request.opened'
         ],
         criteria=[
-            ['source.repository', 'is', 'hamster-ci'],
-            ['source.number', 'is', 5]
+            ['source.repository', 'is', pullrequest_hook_open_data['repository']['name']],
+            ['source.number', 'is', pullrequest_hook_open_data['number']]
         ],
         actions=[
             {
@@ -92,26 +91,30 @@ def test_event_handler_actions_scheduled(db, monkeypatch, pullrequest_hook_open_
 
     # patch Executor.schedule since we don't actually want to call the tasks
     null_executor = mock.Mock()
-    import pipeline.executor
+    import pipeline.pipeline
     monkeypatch.setattr(
-        pipeline.executor.Executor,
+        pipeline.pipeline.Pipeline,
         'schedule', null_executor
     )
 
-    # get a referennce to the actions that we expect to be called
-    actions = PipelineEventHandler.objects.get(
-        name="pull_request_open_hamster-five"
-    ).action_objects
+    # # get a referennce to the actions that we expect to be called
+    # actions = PipelineEventHandler.objects.get(
+    #     name="pull_request_open_hamster-five"
+    # ).action_objects
 
     response = github_webhook(request)
 
     assert null_executor.called
     assert response.status_code == 200
-    assert null_executor.call_args[0][0][0].name == actions[0].name
-    assert isinstance(null_executor.call_args[0][1], PullRequest)
-    assert null_executor.call_args[0][1].repository == 'hamster-ci'
-    assert null_executor.call_args[0][1].number == 5
-    assert null_executor.call_args[1] == {'event': 'pull_request.opened'}
+
+    source = null_executor.call_args[0][0]
+    assert isinstance(source, PullRequest)
+    assert source.repository == \
+           pullrequest_hook_open_data['repository']['name']
+    assert source.number == pullrequest_hook_open_data['number']
+
+    build_kwargs = null_executor.call_args[1]
+    assert build_kwargs == {'event': 'pull_request.opened'}
 
 
 def test_event_handler_tasks_executed(db, pullrequest_hook_open_data):
@@ -122,8 +125,8 @@ def test_event_handler_tasks_executed(db, pullrequest_hook_open_data):
             'pull_request.opened'
         ],
         criteria=[
-            ['source.repository', 'is', 'hamster-ci'],
-            ['source.number', 'is', 5]
+            ['source.repository', 'is', pullrequest_hook_open_data['repository']['name']],
+            ['source.number', 'is', pullrequest_hook_open_data['number']]
         ],
         actions=[
             {
@@ -138,7 +141,7 @@ def test_event_handler_tasks_executed(db, pullrequest_hook_open_data):
     assert len(task_results) == 1
     build_context = task_results[0].get()
     assert 'get_one' in build_context.results.keys()
-    assert build_context.results['get_one'] == 1
+    assert build_context.results['get_one'] == 'dummy'
 
 
 

@@ -4,6 +4,7 @@ subclasses using the declarative style.
 Event data is not considered, since this uses standard event matching that
 is tested in the pipeline module.
 """
+import pytest
 try:
     import mock
 except ImportError:
@@ -18,7 +19,7 @@ def test_event_matching_pullrequest(monkeypatch):
     """Test eventmatching for pull_request."""
     hook = 'pull_request'
     good_actions = [
-        'opened', 'synchronized', 'closed', 'labeled', 'assigned', 'reopened'
+        'opened', 'synchronize', 'closed', 'labeled', 'assigned', 'reopened'
     ]
     bad_actions = ['nope']
     monkeypatch.setattr(PullRequestEvent, '_is_relevant', lambda self: True)

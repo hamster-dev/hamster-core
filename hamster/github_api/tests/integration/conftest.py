@@ -26,11 +26,6 @@ FIXTURES_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Note that you must export the HAMSTER_* environment variables into the worker's
 # process so that it can connect to github.
 
-try:
-    from pytest import set_trace
-    __builtins__['z'] = set_trace
-except ImportError:
-    pass
 
 @pytest.fixture
 def pullrequest_hook_open_data():
@@ -38,7 +33,7 @@ def pullrequest_hook_open_data():
     """
     pth = os.path.join(
         FIXTURES_BASE,
-        'fixtures', 'webhooks', 'json', 'pr-opened.json'
+        'fixtures', 'webhooks', 'pullrequest.opened.json'
     )
     with open(pth, 'r') as fh:
         data = fh.read()
@@ -51,7 +46,7 @@ def pullrequestcomment_hook_create_data():
     """
     pth = os.path.join(
         FIXTURES_BASE,
-        'fixtures', 'webhooks', 'json', 'pr-comment.json'
+        'fixtures', 'webhooks', 'pullrequest_comment.created.json'
     )
     with open(pth, 'r') as fh:
         data = fh.read()

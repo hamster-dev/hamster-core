@@ -7,7 +7,7 @@ from github_api.sources import PullRequest
 
 @pytest.mark.skipif(
     True,
-    reason='need to get vcr/betamax working in order to integration test this'
+    reason='Test requires a webservice call, need to rewrite with mock'
 )
 def test_pull_request_comment():
     """Test that the pull_request_comment action works correctly."""
