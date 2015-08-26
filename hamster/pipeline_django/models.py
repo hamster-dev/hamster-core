@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-#TODO: move some functionality to a Manager
+#TODO: break this up into two models,
 
 class PipelineEventHandler(models.Model):
     """Model for storage of ``pipeline.event.EventHandler``s in a database.

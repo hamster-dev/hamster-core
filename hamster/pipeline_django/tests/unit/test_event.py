@@ -4,6 +4,8 @@ from pipeline_django.event import Event
 
 
 class CriteriaEvent(Event):
+    """This is just used to scope the event search space to this module,
+    so that events from other modules dont leak in."""
     pass
 
 class FooEvent(CriteriaEvent):
@@ -28,14 +30,14 @@ class Foo2Event(FooEvent):
 def test_single_criteria_match_success():
     """Test that an event's criteria matches input
     """
-    events = CriteriaEvent.find_relevant({'foo': 42})
+    events = CriteriaEvent.find_matching({'foo': 42})
     assert len(events) == 1
     assert events[0].name == 'foo_event'
 
 def test_multiple_criteria_match_success():
     """Test that an event's criteria matches input
     """
-    events = CriteriaEvent.find_relevant({'foo': 42, 'bar': 1})
+    events = CriteriaEvent.find_matching({'foo': 42, 'bar': 1})
     assert len(events) == 2
     assert 'foo2_event' in [e.name for e in events]
 
@@ -44,11 +46,14 @@ class BarEvent(Event):
     __id = 'bar_event'
     @property
     def source(self):
+
         return self._input_data['thesource']
 
 def test_event_data():
     """Test that event data is correctly deserialized
     """
+
+
     bar = BarEvent({
         'thesource': 1234
     })

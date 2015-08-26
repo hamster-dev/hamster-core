@@ -9,6 +9,7 @@ osxenv
 hamster/static
 .cache
 .tox
+.coverage
 
 # files that should never enter source control
 github.key

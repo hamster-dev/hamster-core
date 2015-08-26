@@ -158,9 +158,10 @@ class EventHandler(object):
             predicate = hook.pop('predicate', None)
             event = hook.pop('event', None)
             hooks.append(ActionHook(
-                EventHandler.action_from_dict(hook),
+                hook['action'],
                 predicate=predicate,
-                event=event
+                event=event,
+                **hook.get('kwargs', {})
             ))
 
         workspace_cls = dct.get('workspace')

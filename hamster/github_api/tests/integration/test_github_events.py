@@ -8,7 +8,7 @@ def test_event_matching_pullrequest(pullrequest_hook_open_data):
     """Test pull request open webhook deserializes to a pullrequest event."""
     request_data = pullrequest_hook_open_data
     event_type = 'pull_request'
-    events = GithubEvent.find_relevant(
+    events = GithubEvent.find_matching(
         request_data, event_type
     )
     assert len(events) == 1
@@ -29,7 +29,7 @@ def test_event_matching_pullrequest_comment(pullrequestcomment_hook_create_data)
     """Test issue comment webhook deserializes to a pullrequestcomment event."""
     request_data = pullrequestcomment_hook_create_data
     event_type = 'issue_comment'
-    events = GithubEvent.find_relevant(
+    events = GithubEvent.find_matching(
         request_data, event_type
     )
     assert len(events) == 1
