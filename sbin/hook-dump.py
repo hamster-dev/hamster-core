@@ -18,6 +18,9 @@ from bottle import route, run, request
 PORT=9000
 @route('/github-api/hook/', method='POST')
 def hookdump():
+    if event_filter and not request.headers.get('X-GITHUB-EVENT') == event_filter:
+        return "OK"
+
     if request.content_type == 'application/x-www-form-urlencoded':
         postdata = request.forms['payload']
         with open(dumpfile, 'w') as fh:
@@ -29,9 +32,13 @@ def hookdump():
 
     return "OK"
 
-if len(sys.argv) > 1:
-    dumpfile = sys.argv[1]
-else:
-    dumpfile = 'data.json'
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-f', dest='dumpfile', default='data.json')
+parser.add_argument('--filter', dest='event_filter', default=None)
+
+args = parser.parse_args()
+dumpfile = args.dumpfile
+event_filter = args.event_filter
 
 run(host='0.0.0.0', port=PORT, debug=True)
