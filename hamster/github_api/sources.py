@@ -1,3 +1,9 @@
+"""Sources relevant to github_api
+This is a bare-bones implementation just to get the system up and running.
+
+It needs to be completely rewritten to beter use the github3 api
+and it's lazy loading.
+"""
 import os
 import re
 
@@ -7,8 +13,58 @@ from .utils import (
     get_pull_request_from_api_url, get_pull_request_from_url
 )
 
+class StupidModel(object):
 
-class PullRequest(object):
+    attrs = None
+
+    def __init__(self, **kwargs):
+        """This is temporary, and functional."""
+        for k, v in kwargs.items():
+            assert k in self.attrs
+            setattr(self, k, v)
+
+class Commit(StupidModel):
+    __id = 'commit'
+
+    attrs = (
+        'repository',
+        'sha',
+        'ssh_url'
+    )
+
+    @classmethod
+    def from_webhook(cls, hook_json):
+        """Deserialize from `hook_json`.
+        :param hook_json:
+            webhook json from a `status` github api hook
+        :returns: `Commit` instance
+        """
+        return cls(
+            repository=hook_json['repository']['name'],
+            sha=hook_json['commit']['sha'],
+            ssh_url=hook_json['repository']['ssh_url']
+        )
+
+    @property
+    def acquisition_instructions(self):
+        return {
+            # clone 'base' repo (pull destination)
+            # fetch, then checkout the pull request
+            # merge with the base branch
+            'command': 'git clone {} {}'.format(
+                self.ssh_url, self.repository
+            ),
+            'directory': self.repository,
+            'post_commands': [
+                'git reset --hard {}'.format(self.sha),
+            ]
+        }
+
+    def __str__(self):
+        return "{}@{}".format(self.repository, self.sha)
+
+
+class PullRequest(StupidModel):
     """Simple object that provides information about a pull request.
     """
     __id = 'pull_request'
@@ -29,6 +85,7 @@ class PullRequest(object):
         :param hook_json: Can be one of:
             - webhook json from a `pull_request` github api hook
             - webhook json from a `issue_comment` github api hook
+        :returns: `PullRequest` instance
         """
         if 'pull_request' in hook_json:
             return cls.from_json(hook_json['pull_request'])
@@ -53,11 +110,7 @@ class PullRequest(object):
             ssh_url=data['base']['repo']['ssh_url']
         )
 
-    def __init__(self, **kwargs):
-        """This is temporary, and functional."""
-        for k, v in kwargs.items():
-            assert k in self.attrs
-            setattr(self, k, v)
+
 
     @property
     def acquisition_instructions(self):

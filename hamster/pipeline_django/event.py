@@ -4,6 +4,10 @@ Simple event registration system.
 This is inelegant, but will work for now.
 In particular, the Event class needs to be redesigned.
 
+TODO:
+    - I owuld like to remove the `source` proprty, since it is
+    included in `data`.  I am not sure if it is required anywhere else.
+
 """
 from cached_property import cached_property
 

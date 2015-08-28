@@ -15,7 +15,7 @@ import re
 from cached_property import cached_property
 
 from pipeline_django.event import Event
-from github_api.sources import IssueComment, PullRequest
+from github_api.sources import Commit, PullRequest, IssueComment
 
 
 class GithubWebhookEvent(Event):
@@ -27,7 +27,6 @@ class GithubWebhookEvent(Event):
         the subclass should respond to.  required.
     """
     hook_event = None
-    valid_actions = []
 
     @classmethod
     def find_matching(cls, request):
@@ -43,13 +42,6 @@ class GithubWebhookEvent(Event):
         hook_event_name = request.META.get('HTTP_X_GITHUB_EVENT')
         registered_for_hook = Event.find('hook_event', hook_event_name)
 
-        # filter those events by the hook action
-        action = request.data.get('action')
-        if action:
-            registered_for_hook = filter(
-                lambda klass: action in klass.valid_actions, registered_for_hook
-            )
-
         # mimic behavior of our base class ny matching
         # event criteria to input data
         found = []
@@ -59,21 +51,6 @@ class GithubWebhookEvent(Event):
                 found.append(instance)
 
         return sorted(found)
-
-    @cached_property
-    def action(self):
-        """Extract the hook action from the request data.
-        """
-        return self._input_data.get('action')
-
-    @cached_property
-    def name(self):
-        """Override base class impl, allowing for hook 'actions', which
-        are more specific instances of a given event.
-        e.g. "pull_request.opened"
-        """
-        base_name = super(GithubWebhookEvent, self).name
-        return "{}.{}".format(base_name, self.action)
 
     def __repr__(self):
         #TODO: move to pipeline, in base class
@@ -86,14 +63,38 @@ class GithubWebhookEvent(Event):
         return self.name < other.name
 
 
+class CommitStatusEvent(GithubWebhookEvent):
+    """Commit status webhook.
+    """
+    __id = 'commit_status'
+    hook_event = 'status'
+
+    @property
+    def name(self):
+        base_name = super(GithubWebhookEvent, self).name
+        return "{}.{}".format(base_name, self._input_data['state'])
+
+    @property
+    def source(self):
+        return Commit.from_webhook(
+            self._input_data
+        )
+
+
 class PullRequestEvent(GithubWebhookEvent):
     """Pull Request github webhook event.
     """
     __id = 'pull_request'
     hook_event = 'pull_request'
-    valid_actions = [
-        'opened', 'synchronize', 'closed', 'labeled', 'assigned', 'reopened'
-    ]
+
+    @cached_property
+    def name(self):
+        """Override base class impl, allowing for hook 'actions', which
+        are more specific instances of a given event.
+        e.g. "pull_request.opened"
+        """
+        base_name = super(GithubWebhookEvent, self).name
+        return "{}.{}".format(base_name, self._input_data['action'])
 
     @cached_property
     def source(self):
@@ -102,7 +103,7 @@ class PullRequestEvent(GithubWebhookEvent):
         )
 
 
-class PullRequestIssueCommentEvent(GithubWebhookEvent):
+class PullRequestIssueCommentEvent(PullRequestEvent):
     """Issue Comment github webhook event.
     Only relevant for pull request comments (which are a variant
     of issue comment); if you want to implement issue comment handling,
@@ -110,7 +111,6 @@ class PullRequestIssueCommentEvent(GithubWebhookEvent):
     """
     __id = 'pull_request_comment'
     hook_event = 'issue_comment'
-    valid_actions = ['created']
     criteria = [
         ('comment.body', 'not like', r'^<!--HAMSTERED-->')
     ]
@@ -126,12 +126,6 @@ class PullRequestIssueCommentEvent(GithubWebhookEvent):
             return False
 
         return super(PullRequestIssueCommentEvent, self)._is_relevant()
-
-    @cached_property
-    def source(self):
-        return PullRequest.from_webhook(
-            self._input_data
-        )
 
     @cached_property
     def comment(self):
@@ -153,7 +147,6 @@ class JenkinsPrBuilderStatusCommentEvent(PullRequestIssueCommentEvent):
     """
     __id = 'prbuilder_status'
 
-    valid_actions = ['created']
     url_re = r'https?://[^\s<>"]+|www\.[^\s<>"]+'
 
     criteria = [

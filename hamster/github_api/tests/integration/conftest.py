@@ -69,6 +69,18 @@ def pullrequestcomment_hook_prbuilder_success_data():
     return json.loads(data)
 
 
+@pytest.fixture
+def commit_status_hook_success_data():
+    """Returns a json string for commit status of success
+    """
+    pth = os.path.join(
+        FIXTURES_BASE,
+        'fixtures', 'webhooks', 'commit_status.success.json'
+    )
+    with open(pth, 'r') as fh:
+        data = fh.read()
+
+    return json.loads(data)
 '''
  Removed code here
 '''
