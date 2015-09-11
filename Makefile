@@ -13,6 +13,8 @@
 
 scratch: check install run
 update: build refresh run
+update-and-watch: build refresh run-nodaemon
+
 
 # check for deps
 check:
@@ -29,6 +31,9 @@ install: clean build
 
 run:
 	docker-compose up -d
+
+run-nodaemon:
+	docker-compose up
 
 develop:
 	docker-compose -f docker-compose-dev.yml up
