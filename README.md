@@ -1,6 +1,9 @@
 # Hamster CI
 ![Hamster](http://i5.glitter-graphics.org/pub/1933/1933385pgqm471nc2.jpg)
 
+[![Build Status](https://api.travis-ci.org/hamster-dev/hamster-core.svg)](https://travis-ci.org/hamster-dev/hamster-core) 
+
+
 A distributed python3 system that reacts to github events, allowing a user to specify actions 
 to be taken when these events occur.  Actions are executed on remote workers, using the 
 `celery` library.
