@@ -60,6 +60,10 @@ RUN pip3 install cffi six
 # This is another hack, without it pipeline doesnt install correctly
 RUN pip3 install idna
 
+# This requirement is probably installed by postgres, but I am leaving it
+# here to be explicit.  This is needed by github3.py.
+RUN apt-get -y install libssl-dev
+
 ENV PYTHONUNBUFFERED 1
 WORKDIR hamster
 
