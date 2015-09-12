@@ -6,8 +6,6 @@ from functools import partial
 # requires github3.py==1.0.0a2
 from github3 import GitHub, GitHubEnterprise
 
-import urllib3
-urllib3.disable_warnings()
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -34,7 +32,6 @@ else:
     gh = partial(
         GitHubEnterprise,
         'https://{}'.format(args.github),
-        verify=False
     )
 
 github = gh(
@@ -45,7 +42,7 @@ github = gh(
 repository = github.repository(args.owner, args.repo)
 sha = args.sha if args.sha else repository.commits().next().sha
 
-print('Making commit status for repo {} @{}'.format(repository, sha))
+print('Making commit status for repo {} @{} using {}'.format(repository, sha, github))
 repository.create_status(
     sha,
     args.state,
