@@ -1,6 +1,6 @@
 import pytest
 
-from github_api.sources import PullRequest
+from pullman.sources import PullRequest
 
 
 @pytest.mark.xfail(reason='This test requires a web service call, need to replace with a mock')

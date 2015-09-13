@@ -3,7 +3,7 @@ import pytest
 from pipeline.actions import TaskAction
 from pipeline.context import BuildContext
 
-from github_api.sources import PullRequest
+from pullman.sources import PullRequest
 
 @pytest.mark.skipif(
     True,

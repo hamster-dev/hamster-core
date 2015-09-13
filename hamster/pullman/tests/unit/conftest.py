@@ -63,7 +63,7 @@ def pullrequest_hook_open_data():
 def pullrequest_object():
     """Create a pull request object from the webhook json.
     """
-    from github_api.sources import PullRequest
+    from pullman.sources import PullRequest
     pth = os.path.join(
         FIXTURES_BASE,
         'fixtures', 'webhooks', 'pullrequest.opened.json'

@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 
 from pipeline_django.models import PipelineEventHandler
 
-from github_api.events import GithubWebhookEvent
+from pullman.events import GithubWebhookEvent
 
 import logging
 logger = logging.getLogger(__name__)

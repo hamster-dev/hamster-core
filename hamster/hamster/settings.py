@@ -43,7 +43,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'pipeline',  # TODO this is here ony for task registration in celery.py - figure out another way to get the pipeline tasks
     'pipeline_django',
-    'github_api',
+    'pullman',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -118,7 +118,7 @@ LOGGING = {
            'level': 'DEBUG',
            'propagate': False,
         },
-        'github_api': {
+        'pullman': {
            'handlers': ['console'],
            'level': 'DEBUG',
            'propagate': False,

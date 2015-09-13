@@ -6,8 +6,8 @@ import pytest
 
 from rest_framework.test import APIRequestFactory
 
-from github_api.sources import PullRequest
-from github_api.api import github_webhook, handle_github_events
+from pullman.sources import PullRequest
+from pullman.api import github_webhook, handle_github_events
 
 from pipeline_django.models import PipelineEventHandler
 

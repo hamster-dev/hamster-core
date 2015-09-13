@@ -13,7 +13,7 @@ from pipeline import BuildContext
 
 def test_pullrequest_comment_no_pull_request(mocker, pullrequest_object):
     """Test that the pr comment task fails when the pull request is invalid."""
-    mock_github = mocker.patch('github_api.tasks.github')
+    mock_github = mocker.patch('pullman.tasks.github')
     mock_github.return_value.issue.return_value = None
 
     action = TaskAction('pull_request_comment', message='hello')
@@ -26,7 +26,7 @@ def test_pullrequest_comment_no_pull_request(mocker, pullrequest_object):
 
 def test_pullrequest_comment_error_create(mocker, pullrequest_object):
     """Test that the pr comment task fails when the comment fails."""
-    mock_github = mocker.patch('github_api.tasks.github')
+    mock_github = mocker.patch('pullman.tasks.github')
     mock_github.return_value.issue.return_value.create_comment.return_value = None
 
     action = TaskAction('pull_request_comment', message='hello')
@@ -38,7 +38,7 @@ def test_pullrequest_comment_error_create(mocker, pullrequest_object):
 
 def test_pullrequest_comment_ok(mocker, pullrequest_object):
     """Test that the pr comment task succeeds."""
-    mock_github = mocker.patch('github_api.tasks.github')
+    mock_github = mocker.patch('pullman.tasks.github')
     mock_issue = mock.Mock(spec=Issue)  # pullrequest is an issue yadda yadda
     mock_github.return_value.issue.return_value = mock_issue
 
@@ -57,7 +57,7 @@ def test_pullrequest_comment_ok(mocker, pullrequest_object):
 
 def test_pullrequest_comment_ok_template(mocker, pullrequest_object):
     """Test that the pr comment task with a template succeeds."""
-    mock_github = mocker.patch('github_api.tasks.github')
+    mock_github = mocker.patch('pullman.tasks.github')
     mock_issue = mock.Mock(spec=Issue)  # pullrequest is an issue yadda yadda
     mock_github.return_value.issue.return_value = mock_issue
 

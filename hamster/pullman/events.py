@@ -15,7 +15,7 @@ import re
 from cached_property import cached_property
 
 from pipeline_django.event import Event
-from github_api.sources import Commit, PullRequest, IssueComment
+from pullman.sources import Commit, PullRequest, IssueComment
 
 
 class GithubWebhookEvent(Event):

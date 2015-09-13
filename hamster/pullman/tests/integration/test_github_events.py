@@ -2,7 +2,7 @@ import pytest
 import os
 from unittest import mock
 
-from github_api.events import (
+from pullman.events import (
     GithubWebhookEvent, PullRequestEvent, PullRequestIssueCommentEvent, CommitStatusEvent
 )
 
