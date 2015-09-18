@@ -91,7 +91,7 @@ def test_event_handler_actions_scheduled(db, monkeypatch, pullrequest_hook_open_
 
     # patch Executor.schedule since we don't actually want to call the tasks
     null_executor = mock.Mock()
-    import pipeline.pipeline
+    import pipeline.executor
     monkeypatch.setattr(
         pipeline.pipeline.Pipeline,
         'schedule', null_executor

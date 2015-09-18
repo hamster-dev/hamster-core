@@ -11,8 +11,8 @@ TODO:
 """
 from cached_property import cached_property
 
-from pipeline.bases import Registry
-from pipeline.eval import evaluate_criteria
+from pipeline.registry import Registry
+from pipeline.criteria import evaluate_criteria
 
 import logging
 

@@ -2,8 +2,8 @@ from django.db import models
 from jsonfield import JSONField
 
 from pipeline.actions import TaskAction, ActionHook
-from pipeline.eval import evaluate_criteria
-from pipeline.pipeline import Pipeline
+from pipeline.criteria import evaluate_criteria
+from pipeline.executor import Pipeline
 
 import logging
 
