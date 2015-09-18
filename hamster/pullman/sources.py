@@ -76,7 +76,8 @@ class PullRequest(StupidModel):
         'user',
         'number',
         'dest_branch',
-        'ssh_url'
+        'ssh_url',
+        'title'
     )
 
     @classmethod
@@ -107,7 +108,8 @@ class PullRequest(StupidModel):
             user=data['base']['user']['login'],
             number=data['number'],
             dest_branch=data['base']['ref'],
-            ssh_url=data['base']['repo']['ssh_url']
+            ssh_url=data['base']['repo']['ssh_url'],
+            title=data['title']
         )
 
 

@@ -16,7 +16,7 @@ reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
     name='hamster',
-    version='0.3',
+    version='0.4',
     description="Small furry animal.",
     author="Mike Waters",
     author_email='robert.waters@gmail.com',

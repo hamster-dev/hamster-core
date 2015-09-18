@@ -23,6 +23,18 @@ def test_pullrequest_comment_no_pull_request(mocker, pullrequest_object):
     with pytest.raises(ValueError):
         async_result.get()
 
+def test_pullrequest_comment_no_pull_request(mocker, pullrequest_object):
+    """Test that the pr comment task fails when the pull request is invalid."""
+    mock_github = mocker.patch('pullman.tasks.github')
+    mock_github.return_value.issue.return_value = None
+
+    action = TaskAction('pull_request_comment', message='hello')
+    partial = action.prepare(pullrequest_object, BuildContext())
+    async_result = partial.delay()
+
+    with pytest.raises(ValueError):
+        async_result.get()
+
 
 def test_pullrequest_comment_error_create(mocker, pullrequest_object):
     """Test that the pr comment task fails when the comment fails."""
