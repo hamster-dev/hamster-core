@@ -16,6 +16,31 @@ HAMSTER_GITHUB_TOKEN = os.environ.get(
     'HAMSTER_GITHUB_API_TOKEN'
 )
 
+class Secrets(object):
+    """Container for injecting secrets into pipeline build context.
+    """
+    jenkins_user = os.environ.get(
+        'HAMSTER_JENKINS_API_USERNAME'
+    )
+    jenkins_token = os.environ.get(
+        'HAMSTER_JENKINS_API_TOKEN'
+    )
+
+SECRETS = Secrets()
+
+HAMSTER_FILTER_MODULES = []
+
+HAMSTER_MATCHER_MODULES = []
+#TODO: move this to some initialization code
+for matcher in HAMSTER_MATCHER_MODULES:
+    try:
+        importlib.import_module(matcher)
+    except ImportError as exc:
+        logger.error(
+            "Could not iport matcher {}: {}".format(
+                matcher, exc
+            ))
+
 # this will run on the worker, so s/b correct
 PIPELINE_WORKSPACE_ROOT = tempfile.gettempdir()
 
