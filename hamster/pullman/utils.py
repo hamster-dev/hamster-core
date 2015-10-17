@@ -1,3 +1,11 @@
+"""
+Observations about github3:
+    It does not appear to be possible, or at least robust, to
+    use webhook json data to create instances of github api objects
+    exposes by github3.
+    I have to grab the data that I need in order to use the github3 api
+    to properly access the objects.  This is wasteful, and annoying.
+"""
 from functools import partial
 from django.conf import settings
 from github3 import GitHub, GitHubEnterprise, GitHubError
@@ -5,6 +13,42 @@ from github3.null import NullObject
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+def issue_is_pullrequest(issue):
+    """Determine if an issue is a pull request.
+    """
+    return bool(issue.pull_request())
+
+
+def get_pull_at_head(organization, repository, sha):
+    """Find a pull request having HEAD at given sha.
+    """
+    gh = github()
+    repo = gh.repository(organization, repository)
+    possible_pulls = repo.issues(
+        state='open',
+        sort='updated',
+        direction='desc'
+    )
+    for candidate in possible_pulls:
+        if issue_is_pullrequest(candidate):
+            pull = candidate.pull_request()
+            if pull.head.sha == sha:
+                return pull
+
+
+def get_commit_status(organization, repository, sha, id):
+    """It is really a pain in the motherfucking ass.
+    Wy the fuck can't is have a "CommitStatus.from_json(hook_json)"?h
+    """
+    # read every.fucking.status from the repository,
+    # and filter the results based on (sha, id)
+    gh = github()
+    repo = gh.repository(organization, repository)
+    statuses = list(filter(lambda s: s.id==id, repo.statuses(sha)))
+    assert len(statuses) == 1, 'got >1 commit status for sha {}'.format(sha)
+    return statuses[0]
 
 
 def get_pip_uri_from_pullrequest(pr_obj):
