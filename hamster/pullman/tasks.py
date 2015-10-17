@@ -13,7 +13,8 @@ def _get_pull_request_as_issue(owner, repository, number):
     gh = github()
 
     # using Issue object, since PR is internally an Issue
-    # only way to get a comment on the PR that isnt tied to a change or a commit.
+    # only way to get a comment on the PR that isnt tied to
+    # a change or a commit.
     pr = gh.issue(owner, repository, number)
 
     if not pr:

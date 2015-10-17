@@ -1,7 +1,7 @@
 import pytest
 
 from pipeline_django.event import Event
-from pipeline_django.models import PipelineEventHandler
+from pipeline_django.models import EventSubscriber, Pipeline
 
 
 class WhateverEvent(Event):
@@ -14,8 +14,11 @@ class NothingEvent(WhateverEvent):
     __id = 'nothing.happened'
     @property
     def data(self):
-        self.source = self._input_data
-        return super(NothingEvent, self).data
+        _data =  super(NothingEvent, self).data
+        _data.update({
+            'source': self._event_input
+        })
+        return _data
 
 
 class SomethingEvent(NothingEvent):
@@ -26,16 +29,11 @@ class DummySource(object):
     number = 42
 
 
-def test_eventhandler_execution(db, scoped_broker):
-    """Test that an event handler is executed."""
-    PipelineEventHandler.objects.create(
+def test_eventsubscriber_execution(db, scoped_broker):
+    """Test that an event subscriber is executed."""
+    pl = Pipeline.objects.create(
+        id=1,
         name="test_one",
-        events=[
-            'nothing.happened'
-        ],
-        criteria=[
-            ['source.number', 'is', 42],
-        ],
         actions=[
             {
                 'name': 'get_one',
@@ -43,25 +41,28 @@ def test_eventhandler_execution(db, scoped_broker):
             }
         ]
     )
-    events = WhateverEvent.find_matching(DummySource())
-
-    results = PipelineEventHandler.objects.handle_events(events)
-    assert len(results) == 1
-
-    result = results[0].get()
-    assert result.results['get_one'] == 'dummy'
-
-
-def test_eventhandler_execution_with_hooks(db, scoped_broker):
-    """Test that an event handler is executed."""
-    PipelineEventHandler.objects.create(
-        name="test_one",
+    EventSubscriber.objects.create(
         events=[
             'nothing.happened'
         ],
         criteria=[
             ['source.number', 'is', 42],
         ],
+        pipeline=pl
+    )
+    e = NothingEvent(DummySource())
+    subs = [s for s in EventSubscriber.objects.matching_event(e)]
+    assert len(subs) == 1
+    s = subs[0]
+    async_result = s.pipeline.schedule(e.data)
+    result = async_result.get()
+    assert result.results['get_one'] == 'dummy'
+
+
+def test_eventsubscriber_execution_with_hooks(db, scoped_broker):
+    """Test that an event subscriber is executed."""
+    pl = Pipeline.objects.create(
+        name="test_one",
         actions=[
             {
                 'name': 'get_one',
@@ -81,9 +82,21 @@ def test_eventhandler_execution_with_hooks(db, scoped_broker):
             }
         ]
     )
-    events = WhateverEvent.find_matching(DummySource())
-
-    PipelineEventHandler.objects.handle_events(events)[0].get()
+    EventSubscriber.objects.create(
+        events=[
+            'nothing.happened'
+        ],
+        criteria=[
+            ['source.number', 'is', 42],
+        ],
+        pipeline=pl
+    )
+    e = NothingEvent(DummySource())
+    
+    subs = [s for s in EventSubscriber.objects.matching_event(e)]
+    assert len(subs) == 1
+    s = subs[0]
+    s.pipeline.schedule(e.data).get()
 
     from .tasks import increment_call_count
     assert increment_call_count.call_count == 4
@@ -91,11 +104,8 @@ def test_eventhandler_execution_with_hooks(db, scoped_broker):
 
 def test_eventhandler_shell_execution(db, scoped_broker):
     """Test that an event handler is executed that runs some shell commands."""
-    PipelineEventHandler.objects.create(
+    pl = Pipeline.objects.create(
         name="test_two",
-        events=[
-            'something.happened'
-        ],
         actions=[
             {
                 'name': 'run_something',
@@ -109,13 +119,48 @@ def test_eventhandler_shell_execution(db, scoped_broker):
             }
         ]
     )
-    events = WhateverEvent.find_matching(DummySource())
-    results = PipelineEventHandler.objects.handle_events(events)
-
-    assert len(results) == 1
-
-    result = results[0].get()
+    EventSubscriber.objects.create(
+        events=[
+            'something.happened'
+        ],
+        pipeline=pl
+    )
+    e = SomethingEvent(DummySource())
+    subs = [s for s in EventSubscriber.objects.matching_event(e)]
+    assert len(subs) == 1
+    s = subs[0]
+    result = s.pipeline.schedule(e.data).get()
     task_result = result.results['run_something'].log
     assert len(task_result) == 2
     assert task_result[0][0].startswith('virtualenv')  # its a python workspace...
     assert task_result[1][0] == 'echo 42'
+
+    
+def test_eventsubscriber_execution(db, scoped_broker):
+    """Test that an event subscriber is executed."""
+    pl = Pipeline.objects.create(
+        id=1,
+        name="test_one",
+        actions=[
+            {
+                'name': 'get_one',
+                'action': 'dummy_action'
+            }
+        ]
+    )
+    EventSubscriber.objects.create(
+        events=[
+            'nothing.happened'
+        ],
+        criteria=[
+            ['source.number', 'is', 42],
+        ],
+        pipeline=pl
+    )
+    e = NothingEvent(DummySource())
+    subs = [s for s in EventSubscriber.objects.matching_event(e)]
+    assert len(subs) == 1
+    s = subs[0]
+    async_result = s.pipeline.schedule(e.data)
+    result = async_result.get()
+    assert result.results['get_one'] == 'dummy'

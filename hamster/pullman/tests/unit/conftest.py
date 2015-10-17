@@ -24,7 +24,7 @@ def pullrequest_hook_open_json():
     """
     pth = os.path.join(
         FIXTURES_BASE,
-        'fixtures', 'webhooks', 'pullrequest.opened.json'
+        'fixtures', 'webhooks', 'pull_request.opened.json'
     )
     with open(pth, 'r') as fh:
         data = fh.read()
@@ -52,7 +52,7 @@ def pullrequest_hook_open_data():
     """
     pth = os.path.join(
         FIXTURES_BASE,
-        'fixtures', 'webhooks', 'pullrequest.opened.json'
+        'fixtures', 'webhooks', 'pull_request.opened.json'
     )
     with open(pth, 'r') as fh:
         data = fh.read()
@@ -66,7 +66,7 @@ def pullrequest_object():
     from pullman.sources import PullRequest
     pth = os.path.join(
         FIXTURES_BASE,
-        'fixtures', 'webhooks', 'pullrequest.opened.json'
+        'fixtures', 'webhooks', 'pull_request.opened.json'
     )
     with open(pth, 'r') as fh:
         data = fh.read()

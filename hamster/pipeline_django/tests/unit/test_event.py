@@ -17,7 +17,7 @@ class FooEvent(CriteriaEvent):
     def data(self):
         """Simple deserializer that just returns the input data as-is
         """
-        return self._input_data
+        return self._event_input
 
 class Foo2Event(FooEvent):
     __id = 'foo2_event'
@@ -26,7 +26,7 @@ class Foo2Event(FooEvent):
         ('bar', 'in', [1,2,3])
     ]
 
-
+@pytest.mark.xfail(reason='feature has been removed')
 def test_single_criteria_match_success():
     """Test that an event's criteria matches input
     """
@@ -34,6 +34,7 @@ def test_single_criteria_match_success():
     assert len(events) == 1
     assert events[0].name == 'foo_event'
 
+@pytest.mark.xfail(reason='feature has been removed')
 def test_multiple_criteria_match_success():
     """Test that an event's criteria matches input
     """
@@ -42,22 +43,3 @@ def test_multiple_criteria_match_success():
     assert 'foo2_event' in [e.name for e in events]
 
 
-class BarEvent(Event):
-    __id = 'bar_event'
-    @property
-    def source(self):
-
-        return self._input_data['thesource']
-
-def test_event_data():
-    """Test that event data is correctly deserialized
-    """
-
-
-    bar = BarEvent({
-        'thesource': 1234
-    })
-    assert bar.data == {
-        'source': 1234,
-        'event': 'bar_event'
-    }

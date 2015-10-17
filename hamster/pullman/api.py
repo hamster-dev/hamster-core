@@ -3,24 +3,32 @@ from django.http import HttpResponse
 from django.conf import settings
 from rest_framework.decorators import api_view
 
-from pipeline_django.models import PipelineEventHandler
+from pipeline_django.models import EventSubscriber
 
-from pullman.events import GithubWebhookEvent
+from pullman.events import GithubWebhookPullEvent
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-
 def handle_github_events(request):
     """Route github events to the appropriate event handler.
     """
-    events = GithubWebhookEvent.find_matching(request)
+    events = GithubWebhookPullEvent.find_matching(request)
     if not len(events):
         return []
 
     logger.debug("found events {}".format(events))
-    return PipelineEventHandler.objects.handle_events(events)
+    
+    async_results = []
+
+    for event in events:
+        subscribers = EventSubscriber.objects.matching_event(event)
+        async_results.extend(
+            [r.pipeline.schedule(event.data) for r in subscribers]
+        )
+
+    return async_results
 
 
 hook_methods = ('POST',) if not settings.DEBUG else ('POST', 'GET')

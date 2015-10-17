@@ -23,46 +23,6 @@ class StupidModel(object):
             assert k in self.attrs
             setattr(self, k, v)
 
-class Commit(StupidModel):
-    __id = 'commit'
-
-    attrs = (
-        'repository',
-        'sha',
-        'ssh_url'
-    )
-
-    @classmethod
-    def from_webhook(cls, hook_json):
-        """Deserialize from `hook_json`.
-        :param hook_json:
-            webhook json from a `status` github api hook
-        :returns: `Commit` instance
-        """
-        return cls(
-            repository=hook_json['repository']['name'],
-            sha=hook_json['commit']['sha'],
-            ssh_url=hook_json['repository']['ssh_url']
-        )
-
-    @property
-    def acquisition_instructions(self):
-        return {
-            # clone 'base' repo (pull destination)
-            # fetch, then checkout the pull request
-            # merge with the base branch
-            'command': 'git clone {} {}'.format(
-                self.ssh_url, self.repository
-            ),
-            'directory': self.repository,
-            'post_commands': [
-                'git reset --hard {}'.format(self.sha),
-            ]
-        }
-
-    def __str__(self):
-        return "{}@{}".format(self.repository, self.sha)
-
 
 class PullRequest(StupidModel):
     """Simple object that provides information about a pull request.
@@ -161,3 +121,59 @@ class IssueComment(object):
     @property
     def body(self):
         return self._hook_json["body"]
+
+
+class PullRequestStatus(object):
+    """Represents s CommitStatus on the commit at HEAD of pullrequest.
+    """
+    #TODO: refactor to resemble ``PullRequest``
+    def __init__(self, id, sha, context, state, target_url):
+        self.id = id
+        self.sha = sha
+        self.context = context
+        self.state = state
+        self.target_url = target_url
+
+
+class Commit(StupidModel):
+    """
+    Currently unused
+    """
+    __id = 'commit'
+
+    attrs = (
+        'repository',
+        'sha',
+        'ssh_url'
+    )
+
+    @classmethod
+    def from_webhook(cls, hook_json):
+        """Deserialize from `hook_json`.
+        :param hook_json:
+            webhook json from a `status` github api hook
+        :returns: `Commit` instance
+        """
+        return cls(
+            repository=hook_json['repository']['name'],
+            sha=hook_json['commit']['sha'],
+            ssh_url=hook_json['repository']['ssh_url']
+        )
+
+    @property
+    def acquisition_instructions(self):
+        return {
+            # clone 'base' repo (pull destination)
+            # fetch, then checkout the pull request
+            # merge with the base branch
+            'command': 'git clone {} {}'.format(
+                self.ssh_url, self.repository
+            ),
+            'directory': self.repository,
+            'post_commands': [
+                'git reset --hard {}'.format(self.sha),
+            ]
+        }
+
+    def __str__(self):
+        return "{}@{}".format(self.repository, self.sha)

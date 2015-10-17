@@ -1,69 +1,37 @@
 """
-Github webhook-specific event registration.
-
-Requirements:
-    - in addition to basic cirteria support in base
-    event system, webhook events need to react to the
-    data provided in the hook.
-    This includes:
-        - hook type (pull request etc)
-        - hook action (open, etc - specific to hook type)
-        - the deserialized data from the hook body
+Github pull request webhook-specific event registration.
 """
 import re
 
 from cached_property import cached_property
 
 from pipeline_django.event import Event
-from pullman.sources import Commit, PullRequest, IssueComment
+from pullman.sources import PullRequestStatus, PullRequest, IssueComment
+from pullman.utils import get_pull_at_head
 
 
-class GithubWebhookEvent(Event):
-    """Base class for github webhook events.
+class GithubWebhookPullEvent(Event):
+    """Base class for github pullrequest-related webhook events.
 
     :attribute hook_event: the github webhook event that
-        the subclass should respond to.  required.
-    :attribute valid_actions: list of github webhook event actions
         the subclass should respond to.  required.
     """
     hook_event = None
 
     @classmethod
-    def find_matching(cls, request):
-        """Get the event types that listen for a given webhook http request.
-
-        hook_event_name is extracted from http header, so it is not
-        available in the input data.
-
-            - find subclasses that listen for provided hook
-            - filter by those that listen to the provided hook action
+    def matches_input(cls, event_input):
+        """Use the hook event provided in the request to determine
+        if a subclass matches the input.
+        :param event_input: HttpRequest
+        :returns: bool
         """
-        # find events with a `hook_event` that matches the given hook
-        hook_event_name = request.META.get('HTTP_X_GITHUB_EVENT')
-        registered_for_hook = Event.find('hook_event', hook_event_name)
+        if event_input.META.get('HTTP_X_GITHUB_EVENT') == cls.hook_event:
+            return True
 
-        # mimic behavior of our base class ny matching
-        # event criteria to input data
-        found = []
-        for klass in registered_for_hook:
-            instance = klass(request.data)
-            if instance._is_relevant():
-                found.append(instance)
-
-        return sorted(found)
-
-    def __repr__(self):
-        #TODO: move to pipeline, in base class
-        return "{}/{}/{}".format(self.__class__.__name__, self.name, type(self.source))
-
-    def __lt__(self, other):
-        """In order to order events, we need them to be orderable.
-        Just  order them by event name, as this is only needed for tests (for now)
-        """
-        return self.name < other.name
+        return False
 
 
-class CommitStatusEvent(GithubWebhookEvent):
+class CommitStatusEvent(GithubWebhookPullEvent):
     """Commit status webhook.
     """
     __id = 'commit_status'
@@ -71,17 +39,30 @@ class CommitStatusEvent(GithubWebhookEvent):
 
     @property
     def name(self):
-        base_name = super(GithubWebhookEvent, self).name
-        return "{}.{}".format(base_name, self._input_data['state'])
+        """Generate a name like 'commit_status.success'.
+        """
+        base_name = super(CommitStatusEvent, self).name
+        return "{}.{}".format(base_name, self._event_input.data['state'])
 
-    @property
-    def source(self):
-        return Commit.from_webhook(
-            self._input_data
-        )
+    @cached_property
+    def data(self):
+        """Expose a `PullRequest` and a `PullRequestStatus`.
+        """
+        organization = self._event_input.data['repository']['owner']['login']
+        repository = self._event_input.data['repository']['name']
+        sha = self._event_input.data['sha']
+        _id = self._event_input.data['id']
+        context = self._event_input.data['context']
+        state = self._event_input.data['state']
+        target_url = self._event_input.data['target_url']
+
+        return {
+            'source': get_pull_at_head(organization, repository, sha),
+            'status': PullRequestStatus(_id, sha, context, state, target_url)
+        }
 
 
-class PullRequestEvent(GithubWebhookEvent):
+class PullRequestEvent(GithubWebhookPullEvent):
     """Pull Request github webhook event.
     """
     __id = 'pull_request'
@@ -89,18 +70,20 @@ class PullRequestEvent(GithubWebhookEvent):
 
     @cached_property
     def name(self):
-        """Override base class impl, allowing for hook 'actions', which
-        are more specific instances of a given event.
-        e.g. "pull_request.opened"
+        """Generate a name like 'pull_request.opened'
         """
-        base_name = super(GithubWebhookEvent, self).name
-        return "{}.{}".format(base_name, self._input_data['action'])
+        base_name = super(PullRequestEvent, self).name
+        return "{}.{}".format(base_name, self._event_input.data['action'])
 
     @cached_property
-    def source(self):
-        return PullRequest.from_webhook(
-            self._input_data
-        )
+    def data(self):
+        """Expose a `PullRequest`.
+        """
+        return {
+            'source': PullRequest.from_webhook(
+                self._event_input.data
+            )
+        }
 
 
 class PullRequestIssueCommentEvent(PullRequestEvent):
@@ -111,123 +94,100 @@ class PullRequestIssueCommentEvent(PullRequestEvent):
     """
     __id = 'pull_request_comment'
     hook_event = 'issue_comment'
-    criteria = [
-        ('comment.body', 'not like', r'^<!--HAMSTERED-->')
-    ]
 
-    def _is_relevant(self):
-        """In addition to criteria matching, this class is relevant
-        only if the input data contains the key 'issue.pull_request'.
-        This check is required because the issue_comment hook is
-        relevant to both github Issues and github Pull Requests.
+    @classmethod
+    def matches_input(cls, event_input):
+        """Only match "pull request" and "issue" comments.
+        Don't match comments created by hamster.
+        :param input_data: request object
         """
-        if not 'issue' in self._input_data or \
-                not 'pull_request' in self._input_data['issue']:
+        might_match = super(PullRequestIssueCommentEvent, cls).matches_input(event_input)
+
+        if not might_match:
             return False
 
-        return super(PullRequestIssueCommentEvent, self)._is_relevant()
-
-    @cached_property
-    def comment(self):
-        return IssueComment(self._input_data['comment'])
+        data = event_input.data
+        return all((
+            'issue' in data,
+            'pull_request' in data.get('issue', {}),
+            not data.get('comment', {}).get('body', '').startswith('<!--HAMSTERED-->')
+        ))
 
     @cached_property
     def data(self):
-        data = super(PullRequestIssueCommentEvent, self).data
-        data.update({
-            'comment': self.comment
-        })
-        return data
+        """Expose a `PullRequest` and an `IssueComment`.
+        """
+        return {
+            'source': PullRequest.from_webhook(
+                self._event_input.data
+            ),
+            'comment': IssueComment(
+                self._event_input.data['comment']
+            )
+        }
 
 
 class JenkinsPrBuilderStatusCommentEvent(PullRequestIssueCommentEvent):
     """Issue comment event handler specific to Jenkins prbuilder plugin
     status notifications.
-    TODO: Will be moved to jenkins module.
+
+    @deprecated
+
+    This class will be removed in 1.0, superceded by `CommitStatusEvent`.
     """
     __id = 'prbuilder_status'
-
     url_re = r'https?://[^\s<>"]+|www\.[^\s<>"]+'
 
-    criteria = [
-        ('comment.body', 'like', r'^Test [PASFIL]{4}ed'),
-    ]
-
-    def _is_relevant(self):
-        """In addition to the base behavior of criteria matching,
-        this class is relevant only if there is an url in the deserialized comment body.
-        This is done here, and not in `self.criteria`, because
-        if this information is not present, `self.data` will raise
-        an exception.
-        TODO; figure out a technique to work around this sort of
-        chicken-and-egg problem.  pwrhaps use two passes; the first pass
-        is run against the input data, and the second pass is run against the
-        deserialized data.
+    @classmethod
+    def matches_input(cls, event_input):
+        """This class is relevant only if there is an url in the
+        deserialized comment body.
+        :param input_data: request object
         """
-        if not re.search(self.url_re, self.comment.body):
+        might_match = super(JenkinsPrBuilderStatusCommentEvent, cls).matches_input(event_input)
+
+        if not might_match:
             return False
 
-        return super(JenkinsPrBuilderStatusCommentEvent, self)._is_relevant()
+        data = event_input.data
+        return bool(
+            re.search(cls.url_re, data['comment']['body'])
+        )
 
     @cached_property
     def data(self):
-        """Modify event data by:
+        """Change event data by:
             - adding jenkins build url
-            - changing event name
+            - modifying event name
         """
-        data = super(JenkinsPrBuilderStatusCommentEvent, self).data
+        _data = super(JenkinsPrBuilderStatusCommentEvent, self).data
 
-        data['build_url'] = self.url
-        data['build_status'] = self.build_status
-        data['build_number'] = self.build_number
-        data['build_job'] = self.build_job
+        comment_body = self._event_input.data['comment']['body']
+        # s/b guaranteed to return a match; see check in `matches_input`
+        build_url = re.search(self.url_re, comment_body).group(0)
+        build_status = 'succeeded' if comment_body.startswith('Test PASSed') else 'failed'
 
-        _id = getattr(self, '_{}__id'.format(self.__class__.__name__))
-        data['event'] = "{}.{}".format(_id, self.build_status)
-
-        return data
-
-    @cached_property
-    def url(self):
-        """Extract build url from the comment.
-        Guranteed to match, since we are using the same regex
-        that is_relevant uses.
-        """
-        match = re.search(self.url_re, self.comment.body)
-        return match.group(0)
-
-    def _get_build_url_params(self):
-        """Get build url params.
-        """
         try:
             from urllib.parse import urlparse
         except ImportError:
             import urlparse
-        path_parts = urlparse(self.url).path.split('/')
-        return path_parts[2], path_parts[3]
+        path_parts = urlparse(build_url).path.split('/')
+        build_job, build_number = path_parts[2], path_parts[3]
 
-    @cached_property
-    def build_job(self):
-        """Build job name.
-        """
-        return self._get_build_url_params()[0]
+        _data['build_url'] = build_url
+        _data['build_status'] = build_status
+        _data['build_number'] = build_number
+        _data['build_job'] = build_job
 
-    @cached_property
-    def build_number(self):
-        """Build job number.
-        """
-        return self._get_build_url_params()[1]
+        _id = getattr(self, '_{}__id'.format(self.__class__.__name__))
+        _data['event'] = "{}.{}".format(_id, build_status)
 
-    @cached_property
-    def build_status(self):
-        """Return build success/failure status.
-        """
-        return 'succeeded' if self.comment.body.startswith('Test PASSed') else 'failed'
+        return _data
 
     @cached_property
     def name(self):
         _id = getattr(self, '_{}__id'.format(self.__class__.__name__))
-        return '{}.{}'.format(_id, self.build_status)
+        return '{}.{}'.format(_id, self.data['build_status'])
 
 
 # class PullRequestBotSpeakEvent(PullRequestIssueCommentEvent):
@@ -248,10 +208,4 @@ class JenkinsPrBuilderStatusCommentEvent(PullRequestIssueCommentEvent):
 #
 #         return data
 
-# class PullRequestReviewCommentEvent(GithubEvent):
-#     __id = 'pull_request_review_comment'
-#     hook_event = 'pull_request_review_comment'
-#     valid_actions = ['created']
-#
-#     def __init__(self, request_data):
-#         raise NotImplementedError
+

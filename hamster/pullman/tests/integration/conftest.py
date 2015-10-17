@@ -33,7 +33,7 @@ def pullrequest_hook_open_data():
     """
     pth = os.path.join(
         FIXTURES_BASE,
-        'fixtures', 'webhooks', 'pullrequest.opened.json'
+        'fixtures', 'webhooks', 'pull_request.opened.json'
     )
     with open(pth, 'r') as fh:
         data = fh.read()
@@ -47,7 +47,7 @@ def pullrequestcomment_hook_create_data():
     """
     pth = os.path.join(
         FIXTURES_BASE,
-        'fixtures', 'webhooks', 'pullrequest_comment.created.json'
+        'fixtures', 'webhooks', 'issue_comment.created.json'
     )
     with open(pth, 'r') as fh:
         data = fh.read()

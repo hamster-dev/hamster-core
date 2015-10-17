@@ -9,14 +9,13 @@ from rest_framework.test import APIRequestFactory
 from pullman.sources import PullRequest
 from pullman.api import github_webhook, handle_github_events
 
-from pipeline_django.models import PipelineEventHandler
+from pipeline_django.models import Pipeline, EventSubscriber
 
 
 @pytest.fixture
 def event_handlers(db):
 
-    PipelineEventHandler.objects.create(
-        name="pull_request_open_hamster-six",
+    EventSubscriber.objects.create(
         events=[
             'pull_request.opened'
         ],
@@ -24,56 +23,60 @@ def event_handlers(db):
             ['source.repository', 'is', 'hamster-ci'],
             ['source.number', 'is', 5]
         ],
-        actions=[
-            {
-                'name': 'get_one',
-                'action': 'return_one'
-            }
-        ]
+        pipeline=Pipeline.objects.create(
+            name="pull_request_open_hamster-six",
+            actions=[
+                {
+                    'name': 'get_one',
+                    'action': 'return_one'
+                }
+            ]
+        )
     )
-    PipelineEventHandler.objects.create(
-        name="pull_request_open_two",
+
+    EventSubscriber.objects.create(
         events=[
             'pull_request.opened'
         ],
         criteria=None,
-        actions=[]
+        pipeline=Pipeline.objects.create(
+            name="pull_request_open_two",
+            actions=[]
+        )
     )
-    PipelineEventHandler.objects.create(
-        name="pull_request_open_three",
+
+    EventSubscriber.objects.create(
         events=[
             'pull_request.opened'
         ],
         criteria=[
 
         ],
-        actions=[]
+        pipeline=Pipeline.objects.create(
+            name="pull_request_open_three",
+            actions=[]
+        )
     )
-    PipelineEventHandler.objects.create(
-        name="pull_request_open_four",
+
+    EventSubscriber.objects.create(
         events=[
             'pull_request.opened'
         ],
         criteria=[
 
         ],
-        actions=[]
+        pipeline=Pipeline.objects.create(
+            name="pull_request_open_four",
+            actions=[]
+        )
     )
-
 
 def test_event_handler_actions_scheduled(db, monkeypatch, pullrequest_hook_open_data):
     """Test that Executor.schedule() is called for a given event/handler"""
     # stick something in the database; 'db' fixture will ensure it's
     # deleted after the test
-    PipelineEventHandler.objects.create(
+    pl = Pipeline.objects.create(
         name="pull_request_open",
-        events=[
-            'pull_request.opened'
-        ],
-        criteria=[
-            ['source.repository', 'is', pullrequest_hook_open_data['repository']['name']],
-            ['source.number', 'is', pullrequest_hook_open_data['number']]
-        ],
         actions=[
             {
                 'name': 'get_one',
@@ -81,7 +84,16 @@ def test_event_handler_actions_scheduled(db, monkeypatch, pullrequest_hook_open_
             }
         ]
     )
-
+    EventSubscriber.objects.create(
+        events=[
+            'pull_request.opened'
+        ],
+        criteria=[
+            ['source.repository', 'is', pullrequest_hook_open_data['repository']['name']],
+            ['source.number', 'is', pullrequest_hook_open_data['number']]
+        ],
+        pipeline=pl
+    )
     # craft a request object for the webhook view
     request = APIRequestFactory().post(
         'pipeline/hook/', pullrequest_hook_open_data,
@@ -94,7 +106,7 @@ def test_event_handler_actions_scheduled(db, monkeypatch, pullrequest_hook_open_
     import pipeline.executor
     monkeypatch.setattr(
         pipeline.pipeline.Pipeline,
-        'schedule', null_executor
+        '__init__', null_executor
     )
 
     # # get a referennce to the actions that we expect to be called
@@ -108,19 +120,28 @@ def test_event_handler_actions_scheduled(db, monkeypatch, pullrequest_hook_open_
     assert response.status_code == 200
 
     source = null_executor.call_args[0][0]
+    filters = {}
     assert isinstance(source, PullRequest)
     assert source.repository == \
            pullrequest_hook_open_data['repository']['name']
     assert source.number == pullrequest_hook_open_data['number']
 
     build_kwargs = null_executor.call_args[1]
-    assert build_kwargs == {'event': 'pull_request.opened'}
+    assert build_kwargs == {'composition': 'chain'}
 
 
 def test_event_handler_tasks_executed(db, pullrequest_hook_open_data):
     """Test that the actions associated with an event handler are executed."""
-    PipelineEventHandler.objects.create(
+    pl = Pipeline.objects.create(
         name="pull_request_open_hamster-five",
+        actions=[
+            {
+                'name': 'get_one',
+                'action': 'dummy_action'
+            }
+        ]
+    )
+    EventSubscriber.objects.create(
         events=[
             'pull_request.opened'
         ],
@@ -128,12 +149,7 @@ def test_event_handler_tasks_executed(db, pullrequest_hook_open_data):
             ['source.repository', 'is', pullrequest_hook_open_data['repository']['name']],
             ['source.number', 'is', pullrequest_hook_open_data['number']]
         ],
-        actions=[
-            {
-                'name': 'get_one',
-                'action': 'dummy_action'
-            }
-        ]
+        pipeline=pl
     )
     request = mock.Mock()
     request.data = pullrequest_hook_open_data

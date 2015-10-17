@@ -1,10 +1,16 @@
 
 import os
 import tempfile
+import importlib
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 DEBUG = True if 'HAMSTER_DEBUG' in os.environ else False
 TEMPLATE_DEBUG = DEBUG
 
+#TODO: refactor these auth variables into the database
 github_hostname = os.environ.get(
     'HAMSTER_GITHUB_HOST', 'github.com'
 )
