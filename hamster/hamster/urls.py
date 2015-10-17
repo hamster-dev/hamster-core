@@ -3,7 +3,8 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = patterns('',
-    url(r'^github-api/', include('pullman.urls')),
+    url(r'^pullman/', include('pullman.urls')),
+    url(r'^github-api/', include('pullman.urls')),  # legacy support, remove
     url(r'^admin/', include(admin.site.urls)),
     )
 
