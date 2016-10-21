@@ -1,0 +1,18 @@
+env
+osxenv
+*.pyc
+*.swp
+.Python
+*.egg-info
+*.sqlite3
+.ropeproject
+.idea
+hamster/static
+.cache
+.tox
+.coverage
+*Q
+# files that should never enter source control
+github.key
+github.pub
+gitconfig

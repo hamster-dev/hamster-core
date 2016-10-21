@@ -1,0 +1,215 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept: [application/vnd.github.v3.full+json]
+      Accept-Charset: [utf-8]
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Type: [application/json]
+      User-Agent: [github3.py/1.0.0a2]
+    method: GET
+    uri: https://api.github.com/user
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA51UTW+jMBT8Lz6TAmmaEEvVXvYntJde0AMcsGKwZQxRFuW/75iPahNVK5ET8Pxm
+        PB7meWBKl7JhnNXyLC7khG1ZwGTBeLw7Hg9JwKgnRzbtrEJX5ZxpeRhOxfallK7qsq4VNteNE417
+        yXUdduEE/tW/v4KttDOHp2UoPHAZOfNMYJC14Z2cytXqQcC08Qi4az1ppfQFDI+C/79J+I2DvOld
+        NuVTHMANoXaVgGc4ys0bIFu3VtCIGUL/SGXhWVr8BiuKlaJmFCRdGqgZQiuMHum6rM2tNE7qZq24
+        Oyy4tC2pkX/oGS5gfeS8rLUyRgywokfy1oIn0BAaK3vKr94SK3Ihe1j8FOEDGnzuagQS/4kYeMOl
+        EykVtR+3E6lWBKyh2jfcJRiRNtRcUf4tSAnrLOVnwDNMKuNNp1SAoc1Hr5dvUZPEeE6LlbSCMgXi
+        6TuTenk1XaZknk6+8V0csLkypo3x/RJ+fw3wLda/ZwEXwmvAclA7GEQO+rZRdNzE8SY6fEQRf4t4
+        nHxBaGeKf3vi/SaONlHyESd8u8Omvmc0HXbM+0bwSjtS6VKfFaLuY1v8UC9ke8aAUYlzxknktWH0
+        KdOWnPbqgTWKYNGw2HyyQvj/YCgH6HjYv+23uOR+RM76Fh23219Wmy8RKgUAAA==
+    headers:
+      Access-Control-Allow-Origin: ['*']
+      Access-Control-Expose-Headers: ['ETag, Link, X-GitHub-OTP, X-RateLimit-Limit,
+          X-RateLimit-Remaining, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes,
+          X-Poll-Interval']
+      Cache-Control: ['private, max-age=60, s-maxage=60']
+      Content-Encoding: [gzip]
+      Content-Security-Policy: [default-src 'none']
+      Content-Type: [application/json; charset=utf-8]
+      Date: ['Fri, 14 Oct 2016 21:25:47 GMT']
+      ETag: [W/"696d810dfd9581513d75d4c1812667e1"]
+      Last-Modified: ['Sat, 08 Oct 2016 18:24:41 GMT']
+      Server: [GitHub.com]
+      Status: [200 OK]
+      Strict-Transport-Security: [max-age=31536000; includeSubdomains; preload]
+      Vary: ['Accept, Authorization, Cookie, X-GitHub-OTP', Accept-Encoding]
+      X-Accepted-OAuth-Scopes: ['']
+      X-Content-Type-Options: [nosniff]
+      X-Frame-Options: [deny]
+      X-GitHub-Media-Type: [github.v3; param=full; format=json]
+      X-GitHub-Request-Id: ['D1145CE0:6EED:BEA77BF:58014D5B']
+      X-OAuth-Scopes: ['gist, read:repo_hook, repo, user']
+      X-RateLimit-Limit: ['5000']
+      X-RateLimit-Remaining: ['4871']
+      X-RateLimit-Reset: ['1476481994']
+      X-Served-By: [c6c65e5196703428e7641f7d1e9bc353]
+      X-XSS-Protection: [1; mode=block]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Accept: [application/vnd.github.v3.full+json]
+      Accept-Charset: [utf-8]
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Type: [application/json]
+      User-Agent: [github3.py/1.0.0a2]
+    method: GET
+    uri: https://api.github.com/user
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA51UTW+jMBT8Lz6TAmmaEEvVXvYntJde0AMcsGKwZQxRFuW/75iPahNVK5ET8Pxm
+        PB7meWBKl7JhnNXyLC7khG1ZwGTBeLw7Hg9JwKgnRzbtrEJX5ZxpeRhOxfallK7qsq4VNteNE417
+        yXUdduEE/tW/v4KttDOHp2UoPHAZOfNMYJC14Z2cytXqQcC08Qi4az1ppfQFDI+C/79J+I2DvOld
+        NuVTHMANoXaVgGc4ys0bIFu3VtCIGUL/SGXhWVr8BiuKlaJmFCRdGqgZQiuMHum6rM2tNE7qZq24
+        Oyy4tC2pkX/oGS5gfeS8rLUyRgywokfy1oIn0BAaK3vKr94SK3Ihe1j8FOEDGnzuagQS/4kYeMOl
+        EykVtR+3E6lWBKyh2jfcJRiRNtRcUf4tSAnrLOVnwDNMKuNNp1SAoc1Hr5dvUZPEeE6LlbSCMgXi
+        6TuTenk1XaZknk6+8V0csLkypo3x/RJ+fw3wLda/ZwEXwmvAclA7GEQO+rZRdNzE8SY6fEQRf4t4
+        nHxBaGeKf3vi/SaONlHyESd8u8Omvmc0HXbM+0bwSjtS6VKfFaLuY1v8UC9ke8aAUYlzxknktWH0
+        KdOWnPbqgTWKYNGw2HyyQvj/YCgH6HjYv+23uOR+RM76Fh23219Wmy8RKgUAAA==
+    headers:
+      Access-Control-Allow-Origin: ['*']
+      Access-Control-Expose-Headers: ['ETag, Link, X-GitHub-OTP, X-RateLimit-Limit,
+          X-RateLimit-Remaining, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes,
+          X-Poll-Interval']
+      Cache-Control: ['private, max-age=60, s-maxage=60']
+      Content-Encoding: [gzip]
+      Content-Security-Policy: [default-src 'none']
+      Content-Type: [application/json; charset=utf-8]
+      Date: ['Fri, 14 Oct 2016 21:25:48 GMT']
+      ETag: [W/"696d810dfd9581513d75d4c1812667e1"]
+      Last-Modified: ['Sat, 08 Oct 2016 18:24:41 GMT']
+      Server: [GitHub.com]
+      Status: [200 OK]
+      Strict-Transport-Security: [max-age=31536000; includeSubdomains; preload]
+      Vary: ['Accept, Authorization, Cookie, X-GitHub-OTP', Accept-Encoding]
+      X-Accepted-OAuth-Scopes: ['']
+      X-Content-Type-Options: [nosniff]
+      X-Frame-Options: [deny]
+      X-GitHub-Media-Type: [github.v3; param=full; format=json]
+      X-GitHub-Request-Id: ['D1145CE0:6EED:BEA77E2:58014D5B']
+      X-OAuth-Scopes: ['gist, read:repo_hook, repo, user']
+      X-RateLimit-Limit: ['5000']
+      X-RateLimit-Remaining: ['4870']
+      X-RateLimit-Reset: ['1476481994']
+      X-Served-By: [318e55760cf7cdb40e61175a4d36cd32]
+      X-XSS-Protection: [1; mode=block]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Accept: [application/vnd.github.v3.full+json]
+      Accept-Charset: [utf-8]
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Type: [application/json]
+      User-Agent: [github3.py/1.0.0a2]
+    method: GET
+    uri: https://api.github.com/repos/mikewaters/pipeline/issues/1
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA+1XW2/aMBT+K5WfAZNA2xF13cuqPW2TJvqyqkJOcghWHduzHToW8d937ITS0pWV
+        dNoTTyjmfN+5+Nxck8oIkpCFc9omlDLNBwV3iyodZKqkBrSytOR3cM8cGEs11yC4BMqtrcDSiPRI
+        EOJOmdWsGxlyCJaCsB3xD8bQhqamkpWwRlr0oQTp3k68IUJOWP4TxoYG+RauFDuOP7qBP8VeV0KE
+        yPOcJNEwPj0/OxuPekRWZQoGj3rEcScA7/Xm49cv05PPV98+Xd2eXOscb/HEwI+KGwiBGbifDokq
+        63E1EargEmFbrRst48nk/F2PsCVzzOzeUzi0beJ4rkxJh/QhhyoaBfCH5fsRshWm5fDGE697XwJ6
+        sscJeEC8UHSuhFD3yLBr8NMs31VCH3APHFwWnTgQV1PlFoAxQ1d8Thbc/i0hnxkUMDX1PzOeexaL
+        ETeQH2hUi0KT7iVaU4cCD3RVajPDteNKHhqtJ1jkUqZgkv9iXbgQa5EitJQDfQsYxL6mPp8FuAHV
+        VBu+ZNnKh8RABnyJIe5EuINGPrfSviKvfalhwLmDGctLX25zJiysN02QJDf1/qJ4uSs3/Y+mVYEq
+        fBNEhc1HpoTCEifzLJ7EE7K+DSnkvIDSIFFcqOwOsCaDNVjp1vJCAgoc20I7/I5tYc+q8Kykjm0B
+        Z9/O+MJ++6SpvKotbCrRhs5wHNFhET3W4rEW//uIxqFZcgHWKYlzUeIavn1ikGSCHwZwpuYz5nCu
+        xsPotD98149H0+EwiUfJOP6OBV+FLXwrc9aPhv1oPI2jJD5NxudeJhPKtiKNFr/yz/zijsr9RN67
+        NL+8H3ia5tH2hldHzufzLg+WgQeic5q5bNGJICAJbkqpylcz7wKG+UJfTjEqF1RfInn4xwG+ahLi
+        j9uj7Vcb2nTVXOD6NzNhUnoCDwAA
+    headers:
+      Access-Control-Allow-Origin: ['*']
+      Access-Control-Expose-Headers: ['ETag, Link, X-GitHub-OTP, X-RateLimit-Limit,
+          X-RateLimit-Remaining, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes,
+          X-Poll-Interval']
+      Cache-Control: ['private, max-age=60, s-maxage=60']
+      Content-Encoding: [gzip]
+      Content-Security-Policy: [default-src 'none']
+      Content-Type: [application/json; charset=utf-8]
+      Date: ['Fri, 14 Oct 2016 21:25:48 GMT']
+      ETag: [W/"2a17de9f315f193c7fa512930630d4cb"]
+      Last-Modified: ['Fri, 14 Oct 2016 21:25:47 GMT']
+      Server: [GitHub.com]
+      Status: [200 OK]
+      Strict-Transport-Security: [max-age=31536000; includeSubdomains; preload]
+      Vary: ['Accept, Authorization, Cookie, X-GitHub-OTP', Accept-Encoding]
+      X-Accepted-OAuth-Scopes: ['public_repo, repo']
+      X-Content-Type-Options: [nosniff]
+      X-Frame-Options: [deny]
+      X-GitHub-Media-Type: [github.v3; param=full; format=json]
+      X-GitHub-Request-Id: ['D1145CE0:6EED:BEA77F8:58014D5C']
+      X-OAuth-Scopes: ['gist, read:repo_hook, repo, user']
+      X-RateLimit-Limit: ['5000']
+      X-RateLimit-Remaining: ['4869']
+      X-RateLimit-Reset: ['1476481994']
+      X-Served-By: [02ea60dfed58b2a09106fafd6ca0c108]
+      X-XSS-Protection: [1; mode=block]
+    status: {code: 200, message: OK}
+- request:
+    body: '{"assignee": "mikewaters", "labels": ["bug"], "title": "[DONT MERGE] Update
+      requirements.txt", "body": "Test", "state": "open"}'
+    headers:
+      Accept: [application/vnd.github.v3.full+json]
+      Accept-Charset: [utf-8]
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['127']
+      Content-Type: [application/json]
+      User-Agent: [github3.py/1.0.0a2]
+    method: PATCH
+    uri: https://api.github.com/repos/mikewaters/pipeline/issues/1
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA+1XW2/aMBT+K5WfAZNAL0Rd97JqT9ukib2sqpCTHIJVx/Zsh45F/PcdO6G0dGUl
+        nfbEE4o533cuPjfXpDKCJGThnLYJpUzzQcHdokoHmSqpAa0sLfkd3DMHxlLNNQgugXJrK7A0Ij0S
+        hLhTZjXrRoYcgqUgbEf8gzG0oampZCWskRZ9KEG6txNviJATlv+EsaFBvoUrxY7jj27gT7HXlRAh
+        8jwnSTSMT8/PzsajHpFVmYLBox5x3AnAe7358OXz9OTT9deP17cn33SOt3hi4EfFDYTADNxPh0SV
+        9biaCFVwibCt1o2W8WRyftEjbMkcM7v3FA5tmzieK1PSIX3IoYpGAfx++W6EbIVpObzxxOvel4Ce
+        7HECHhAvFJ0rIdQ9Muwa/DTLd5XQB9wDB5dFJw7E1VS5BWDM0BWfkwW3f0vIZwYFTE39z4znnsVi
+        xA3kBxrVotCke4nW1KHAA12V2sxw7biSh0brCRa5lCmY5L9YFy7EWqQILeVA3wIGsa+pz2cBbkA1
+        1YYvWbbyITGQAV9iiDsR7qCRz620r8hvvtQw4NzBjOWlL7c5ExbWmyZIkpt6f1G83JWb/kfTqkAV
+        vgmiwuYjU0JhiZN5Fk/iCVnfhhRyXkBpkCguVHYHWJPBGqx0a3khAQWObaEdfse2sGdVeFZSx7aA
+        s29nfGG/fdJUXtUWNpVoQ2c4juiwiB5r8ViL/31E49AsuQDrlMS5KHEN3z4xSDLBDwM4U/MZczhX
+        42F02h9e9OPRdDhM4lEyjr9jwVdhC9/KnPWjYT8aT+MoiU+T8YWXyYSyrUijxa/8M7+4o3I/kfcu
+        zS/vB56mebS94dWR8/m8y4Nl4IHonGYuW3QiCEiCm1Kq8tXMu4BhvtRXU4zKJdVXSB7+cYCvmoT4
+        4/Zo+9WGNl01F7j+DQ7V/5sCDwAA
+    headers:
+      Access-Control-Allow-Origin: ['*']
+      Access-Control-Expose-Headers: ['ETag, Link, X-GitHub-OTP, X-RateLimit-Limit,
+          X-RateLimit-Remaining, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes,
+          X-Poll-Interval']
+      Cache-Control: ['private, max-age=60, s-maxage=60']
+      Content-Encoding: [gzip]
+      Content-Security-Policy: [default-src 'none']
+      Content-Type: [application/json; charset=utf-8]
+      Date: ['Fri, 14 Oct 2016 21:25:48 GMT']
+      ETag: [W/"483e6763320b2274761637b25c028794"]
+      Server: [GitHub.com]
+      Status: [200 OK]
+      Strict-Transport-Security: [max-age=31536000; includeSubdomains; preload]
+      Vary: ['Accept, Authorization, Cookie, X-GitHub-OTP', Accept-Encoding]
+      X-Accepted-OAuth-Scopes: ['public_repo, repo']
+      X-Content-Type-Options: [nosniff]
+      X-Frame-Options: [deny]
+      X-GitHub-Media-Type: [github.v3; param=full; format=json]
+      X-GitHub-Request-Id: ['D1145CE0:6EED:BEA781E:58014D5C']
+      X-OAuth-Scopes: ['gist, read:repo_hook, repo, user']
+      X-RateLimit-Limit: ['5000']
+      X-RateLimit-Remaining: ['4868']
+      X-RateLimit-Reset: ['1476481994']
+      X-Served-By: [8166eb1845e56d99ba68a6b1065016c1]
+      X-XSS-Protection: [1; mode=block]
+    status: {code: 200, message: OK}
+version: 1

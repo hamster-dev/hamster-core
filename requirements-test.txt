@@ -1,0 +1,13 @@
+coverage
+flake8>=2.1.0
+
+pytest
+pytest-django
+pytest-cov
+pytest-mock
+pytest-xprocess
+vcrpy
+django-extensions
+
+ipdb
+mock

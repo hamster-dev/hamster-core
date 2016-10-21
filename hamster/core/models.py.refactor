@@ -1,0 +1,211 @@
+"""
+This file contains some models that are intended to be used
+once the model layer is refactored.
+
+Why: the user interface should be a yaml document that describes
+the entirety of the event subscriber --> task pipeline.
+Serializing this yaml document to a graph of related database objects,
+and dealing with changes, inserts, and deletes, is an exercise better 
+left to a later date.
+
+@mikewaters 20161020
+"""
+from django.db import models
+from django.core.validators import RegexValidator
+from jsonfield import JSONField
+from pipeline.gtfo import evaluate_criteria, evaluate_single_criterion, safe_eval
+from pipeline.pipeline import TaskSpec, schedule, LazyStateGetter
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
+pynamevalidator = RegexValidator(
+    r'^[a-zA-Z_]*$',
+    message='must be a valid python identifier',
+    code='Invalid name'
+)
+
+
+pytypevalidator = RegexValidator(
+    r'^(str|int)$',
+    message='must be a valid and supported python type',
+    code='Invalid type'
+)
+
+
+class EventCriteria(models.Model):
+    """
+    :attr criteria (list): Criteria to be ANDed together to determine
+        if a given event should be subscribed to. Each item should
+        be a `pipeline.eval`` criteria (a three-tuple).
+        Example:
+            [
+                ["source.organization", "is", "octocat"],
+                ["source.repository", "is", "Hello-World"],
+            ]
+    """
+    lvalue = models.CharField(max_length=64)
+    oper = models.CharField(
+            max_length=16,
+            choices=(
+                ('is', 'is'),
+                ('in', 'in'),
+                ('like', 'like'),
+                ('not', 'not'),
+                ('not in', 'not in'),
+                ('not like', 'not like'),
+                ('matches', 'matches'),
+            ) 
+        )
+    _rvalue = models.CharField(max_length=255)
+    rv_type = models.CharField(max_length=16, validators=[pytypevalidator])
+    subscriber = models.ForeignKey('EventSubscriber')
+
+    def __init__(self, *args, **kwargs):
+        """I know I'm not supposed to do this, but it's the only easy
+        way for me to hook where i need to hook.
+        I need to set the rvalue's python type *before* it's persisted
+        to a CharField, which happens somewhere in Model>__init__ call chain.
+        There is a django pre_init hook, but that doesn't let me modify
+        anything at all.
+        """
+        # set the `rv_type` field to the python type of `rvalue` **as provided
+        # by the caller**. this will later be used to cast `rvalue` before it's
+        # returned in a query.
+        if 'rvalue' in kwargs:
+            kwargs['rv_type'] = type(kwargs['rvalue']).__name__
+
+        super().__init__(*args, **kwargs)
+
+    @property
+    def rvalue(self):
+        """cast the stored rvalue to the python type that it was
+        originally, before it was saved to a CharField (making it a str)
+        """
+        return (__builtins__[self.rv_type])(self._rvalue)
+
+    @rvalue.setter
+    def rvalue(self, value):
+        self._rvalue = value
+
+    class Meta:
+        app_label = 'event'
+
+    def evaluate(self, data):
+        return evaluate_single_criterion(
+            data,
+            (self.lvalue, self.oper, self.rvalue)
+        )
+
+
+class EventSubscriberManager(models.Manager):
+    """Manager responsible for EventSubscriber.
+    """
+    def matching_event(self, event):
+        """Find subscribers for a given event.
+        :param event: ``event.Event`` instance
+        :returns: list of `EventSubscriber``s
+        """
+        results = []
+
+        for subscriber in self.model.objects.filter(events__contains=event.name):
+            if subscriber.matches_criteria(event.data):
+                logger.debug('Found matching subscriber {}'.format(subscriber))
+                results.append(subscriber)
+
+        return results
+
+
+class EventSubscriber(models.Model):
+    """Represents a subscriber to an event of a given type and composition,
+    and the Pipeline that will be scheduled if a matching event is fired.
+
+    :attr events (list): List of subscribed event names.
+        Example:
+            ["pull_request.opened"]
+    :attr pipeline (Pipeline): the pipeline to be executed
+    """
+    events = JSONField(default=[])
+    pipeline = models.ForeignKey('Pipeline')
+    objects = EventSubscriberManager()
+
+    class Meta:
+        app_label = 'event'
+
+    def matches_criteria(self, data):
+        """Determine if a subscriber is subcribed to an event
+        """
+        for criterion in self.eventcriteria_set.all():
+            if not criterion.evaluate(data):
+                return False
+
+        return True
+
+    def __str__(self):
+        return '{} {} {}'.format(self.__class__.__name__, self.events, self.pipeline.name)
+
+
+class Stage(models.Model):
+    """Represents a build step - a celery task and it's arguments.
+
+    :attr name (str): stage friendly name
+    :attr var_name (str): key that task's return value will be hoisted into
+        StateTracker afer it is executed (python identifier)
+    :attr task_name (str): the task to run; must be in celery task registry
+    :attr task_arguments (list): list of TaskArgument instances
+    """
+    task_name = models.CharField(max_length=30, validators=[pynamevalidator])
+    # task_kwargs = JSONField(blank=True, null=True)  # https://github.com/bradjasper/django-jsonfield/issues/50
+    # task_inject_kwargs = JSONField(blank=True, null=True)
+    pipeline = models.ForeignKey('Pipeline', on_delete=models.CASCADE)
+
+    class Meta:
+        app_label = 'event'
+
+    def __str__(self):
+        return '{} {}'.format(self.__class__.__name__, self.name)
+
+
+class Pipeline(models.Model):
+    """Store all the criteria for composing a pipeline.
+
+    :attr name (str): friendly name
+    :attr stages (list): list of Stages
+    """
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        app_label = 'event'
+
+    def run(self, args, event):
+        """Schedule the tasks with `pipeline`.
+
+        :param args (list): list of TaskArguments
+        :param event (event.Event): The initiating event
+
+        For each stage in the pipeline, create a `pipeline.TaskSpec`
+        storing the task information and the argument mapping. Send the
+        list of specs in `pipeline.schedule`.
+
+        This should be the only entry point into the `pipeine` module.
+        """
+        tasks = []
+        for stage in self.stage_set.all():
+            spec = TaskSpec(
+                task_name=stage.task_name,
+                result_name=stage.task_name,
+            )
+            spec.kwargs = {}
+            for arg in [a for a in args if a.stage==stage.task_name]:
+                spec.kwargs.update(arg.make_arg())
+
+            logger.debug('generated task spec {}'.format(spec))
+            tasks.append(spec)
+
+        return schedule(tasks, context=event.data)
+
+    def __str__(self):
+        return '{} {}'.format(self.__class__.__name__, self.name)
